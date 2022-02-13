@@ -8,7 +8,9 @@ class SingleDiffusionGN(ptgeo.nn.MessagePassing):
         self.node_features = 1
     
     def message(self, x_i, x_j):
-        return self.diffusion_constant * (x_j - x_i) # try adding noise here
+        x_target = x_i
+        x_source = x_j
+        return self.diffusion_constant * (x_source - x_target) # try adding noise here
     
     def update(self, aggr_out, x=None):
         assert x is not None
@@ -73,18 +75,18 @@ def component_fns_to_vector_fn(component_fns):
 class EquationGN(ptgeo.nn.MessagePassing):
     def __init__(self, message_fn, update_fn):
         super().__init__(aggr='add')
-        if isinstance(message_fn, tuple):
+        if isinstance(message_fn, tuple): # old PySR-related code
             message_fn = component_fns_to_vector_fn(message_fn)
-        if isinstance(update_fn, tuple):
+        if isinstance(update_fn, tuple): # old PySR-related code
             update_fn = component_fns_to_vector_fn(update_fn)
         self.message_fn = message_fn
         self.update_fn = update_fn
 
     def message(self, x_i, x_j):
-        return self.message_fn(t.cat([x_i, x_j], 1))
+        return self.message_fn(t.cat([x_i, x_j], 1)).unsqueeze(dim=-1)
 
     def update(self, aggr_out, x=None):
-        return self.update_fn(t.cat([aggr_out, x], 1))
+        return self.update_fn(t.cat([aggr_out, x], 1)).unsqueeze(dim=-1)
 
     def forward(self, gdata):
         return self.propagate(gdata.edge_index, x=gdata.x)

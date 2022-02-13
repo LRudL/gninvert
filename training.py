@@ -24,11 +24,13 @@ def fit(
         epochs, model, loss_func, opt, train_ds, valid_ds, batch_size=10,
         lr_scheduler = None,
         return_early_on_lr = None,
-        progress_bar = False
+        progress_bar = False,
+        return_lr = False
 ):
     train_x, train_y = train_ds
     valid_x, valid_y = valid_ds
     perf_history = []
+    lr_history = []
     epoch_range = tq.tqdm(range(epochs)) if progress_bar else range(epochs)
     for epoch in epoch_range:
         
@@ -54,11 +56,14 @@ def fit(
 
             perf_history.append(val_loss)
             lr = lr_scheduler.optimizer.param_groups[0]['lr']
+            lr_history.append(lr)
             if return_early_on_lr is not None:
                 if lr < return_early_on_lr:
                     return perf_history
             if epoch % 10 == 0 or epoch == epochs - 1:
                 if not progress_bar:
                     print(epoch, val_loss, lr)
-    
+
+    if return_lr:
+        return perf_history, lr_history
     return perf_history

@@ -1,11 +1,11 @@
 import torch as t
 import torch_geometric as ptgeo
-from functions import gn_time_series
+from gninvert.functions import gn_time_series
 import matplotlib.pyplot as plt
 #import networkx as nx
 #from ptgeo.utils import to_networkx, from_networkx
 
-from functions import gdisplay
+from gninvert.functions import gdisplay
 
 def graph_compare(
         gdata1, gdata2,

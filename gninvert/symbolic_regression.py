@@ -1,5 +1,6 @@
 import torch as t
 from gplearn.genetic import SymbolicRegressor
+from pysr import PySRRegressor
 
 def get_pysr_equations(
         dimensions, function, n=200,

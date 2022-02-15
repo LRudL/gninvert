@@ -1,9 +1,9 @@
 import torch as t
-from gns import MultiDiffusionGN
-from gnns import LinearGNN
-from graph_compare import model_steps_compare
-from functions import generate_training_data
-from training import fit
+from gninvert.gns import MultiDiffusionGN
+from gninvert.gnns import LinearGNN
+from gninvert.graph_compare import model_steps_compare
+from gninvert.functions import generate_training_data
+from gninvert.training import fit
 import itertools
 import tqdm.notebook as tq
 

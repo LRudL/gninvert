@@ -61,12 +61,17 @@ def train_on_param_settings(settings, model, model_eval):
 
     return model, model_eval(model), perf_history
 
-def hpsearch(params, model_constructor, model_evaller):
+def hpsearch(params, model_constructor, model_score_fn):
     settings_list = param_settings(params)
     results = []
     for settings in tq.tqdm(settings_list):
         final_model, eval_val, perf_history = train_on_param_settings(
-            settings, model_constructor(), model_evaller
+            settings, model_constructor(), model_score_fn
         )
-        results.append((settings, final_model, eval_val, perf_history))
-    return sorted(results, key = lambda x : x[2])
+        results.append({
+            "settings": settings,
+            "model": final_model,
+            "score": eval_val,
+            "val_loss_history": perf_history
+        })
+    return sorted(results, key = lambda x : x["score"])

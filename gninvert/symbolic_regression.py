@@ -1,6 +1,7 @@
 import torch as t
 from gplearn.genetic import SymbolicRegressor
 from pysr import PySRRegressor
+import numpy as np
 
 def get_pysr_equations(
         dimensions, function, n=200,
@@ -15,14 +16,29 @@ def get_pysr_equations(
     input_vars_concat = t.cat(input_var_blocks, dim=1).detach().numpy()
     outputs = function(*input_var_blocks).detach().numpy()
     model = PySRRegressor(
-        niterations=niterations,
-        variable_names=variable_names,
-        constraints=constraints,
-        multithreading=False
+        niterations=niterations
     )
-    X = input_vars_concat.detach().numpy()
-    Y = outputs.detach().numpy()
+    X = input_vars_concat
+    Y = outputs
     model.fit(X, Y)
+    return model
+
+def pysr_test():
+    X = 2 * np.random.randn(100, 5)
+    y = 2.5382 * np.cos(X[:, 3]) + X[:, 0] ** 2 - 0.5
+    model = PySRRegressor(
+        niterations=5,
+        binary_operators=["+", "*"],
+        unary_operators=[
+            "cos",
+            "exp",
+            "sin",
+            "inv(x) = 1/x",  # Custom operator (julia syntax)
+        ],
+        model_selection="best",
+        loss="loss(x, y) = (x - y)^2",  # Custom loss function (julia syntax)
+    )
+    model.fit(X, y)
     return model
 
 

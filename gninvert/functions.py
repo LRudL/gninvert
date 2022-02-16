@@ -1,14 +1,12 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as pltcolors
-
 import torch
 import torch_geometric as ptgeo
-
 from einops import rearrange, reduce, repeat
-
 from torch_geometric.utils import to_networkx, from_networkx
 import networkx as nx
+import time
 
 def randrange(n, vmin, vmax):
     return (vmax - vmin) * np.random.rand(n) + vmin
@@ -62,9 +60,8 @@ def gdisplay(gdata, color_scales = None):
                                torch.transpose(gdata.x, 0, 1)[i].tolist()))
         pos = nx.spring_layout(nx_graph, seed=42)
         nx.draw_networkx_nodes(nx_graph, pos, node_color=node_colors, ax=ax[i])
-        nx.draw_networkx_edges(nx_graph, pos, ax=ax[i])
+        nx.draw_networkx_edges(nx_graph, pos, ax=ax[i], arrows=False)
     plt.show()
-
 
 def run_and_draw(gn, gdata, iterations, draw_interval=3, color_scales = None, log=True):
     """Like run_GN, except draws the GN at a certain interval of steps."""
@@ -146,7 +143,7 @@ def generate_training_data(gn):
 
 
 ## TRAINING
-## Code below is DEPRECATED; used by notebooks sim1, sim2, sim2b
+## Code below is DEPRECATED
 ## (see training.py for more up-to-date training code)
 
 def graphs_loss_func(model, xb, yb):

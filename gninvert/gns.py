@@ -48,16 +48,22 @@ class ActivatorInhibitorGN(ptgeo.nn.MessagePassing):
         self.growth_const = growth_const
 
     def message(self, x_i, x_j):
-        return self.diff_consts * x_j[:, 1:] - x_i[:, 1:]
+        return self.diff_consts * (x_j[:, 1:] - x_i[:, 1:])
 
     def update(self, aggr_out, x):
-        vol = x[:, 0]
-        act_concentration = x[:, 1]
-        inh_concentration = x[:, 2]
-        growth = ((act_concentration - inh_concentration) / vol * self.growth_const).unsqueeze(0).squeeze(0)
-        act_inh_delta_vec = aggr_out
+        # give things names for convenience:
+        vol = x[:, 0] # cell sizes
+        act_conc = x[:, 1] # activator concentration
+        inh_conc = x[:, 2] # inhibitor concentration
+        
+        growth = ((act_conc - inh_conc) / vol * self.growth_const)
+        
+        act_inh_delta_vec = aggr_out # 
+        
         delta_vec = t.cat([growth.unsqueeze(1), act_inh_delta_vec], dim=1)
+        
         result = x + delta_vec
+        
         return result
 
     def forward(self, gdata):

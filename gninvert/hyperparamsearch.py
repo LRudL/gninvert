@@ -56,7 +56,9 @@ def train_on_param_settings(settings, model, model_eval):
         valid_ds= (valid_x, valid_y),
         batch_size=settings['batch_size'],
         lr_scheduler=scheduler,
-        progress_bar = True
+        progress_bar = True,
+        regularization=settings.get('regularization_coefficient', False),
+        reg_norm=settings.get('regularization_norm', 1)
     )
 
     return model, model_eval(model), perf_history

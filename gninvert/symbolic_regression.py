@@ -23,6 +23,19 @@ def get_pysr_equations(
     model.fit(X, Y)
     return model
 
+abc = 123
+
+def get_best_eq(sr_obj):
+    return [
+        sr_obj.equations[i][sr_obj.equations[i].score == \
+                            sr_obj.equations[i].score.max()
+        ].iloc[0].sympy_format
+        for i in range(len(sr_obj.equations))
+    ]
+
+
+
+
 def pysr_test():
     X = 2 * np.random.randn(100, 5)
     y = 2.5382 * np.cos(X[:, 3]) + X[:, 0] ** 2 - 0.5
@@ -40,6 +53,8 @@ def pysr_test():
     )
     model.fit(X, y)
     return model
+
+
 
 
 def get_gplearn_equations(

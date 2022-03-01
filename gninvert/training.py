@@ -8,8 +8,23 @@ def graphs_loss_func(model, xb, yb, node_loss_func = t.nn.MSELoss()):
               zip(result, yb)]
     return sum(losses)
 
-def loss_batch(model, loss_func, xb, yb, opt=None):
+def loss_batch(
+        model,
+        loss_func,
+        xb, yb,
+        opt=None,
+        regularization=False,
+        reg_norm=1
+):
     loss = graphs_loss_func(model, xb, yb, node_loss_func = loss_func)
+    if regularization != False:
+        reg = None
+        for W in model.parameters():
+            if reg is None:
+                reg = W.norm(reg_norm)
+            else:
+                reg = reg + (W**reg_norm).sum()
+        loss += regularization * reg
     
     if opt is not None:
         loss.backward()
@@ -25,7 +40,9 @@ def fit(
         lr_scheduler = None,
         return_early_on_lr = None,
         progress_bar = False,
-        return_lr = False
+        return_lr = False,
+        regularization=False,
+        reg_norm=1
 ):
     train_x, train_y = train_ds
     valid_x, valid_y = valid_ds
@@ -40,7 +57,13 @@ def fit(
             end_i = min(i + batch_size, len(train_x))
             xb = train_x[i : end_i]
             yb = train_y[i : end_i]
-            loss_batch(model, loss_func, xb, yb, opt)
+            loss_batch(
+                model, loss_func,
+                xb, yb,
+                opt,
+                regularization=regularization,
+                reg_norm=reg_norm
+            )
 
         
         model.eval()

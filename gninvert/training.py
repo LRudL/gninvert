@@ -36,7 +36,7 @@ def loss_batch(
     return loss.item(), len(xb)
 
 def fit(
-        epochs, model, loss_func, opt, train_ds, valid_ds, batch_size=10,
+        epochs, model, loss_func, opt, train_ds, valid_ds, batch_size=1,
         lr_scheduler = None,
         return_early_on_lr = None,
         progress_bar = False,

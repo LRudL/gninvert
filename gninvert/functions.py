@@ -77,6 +77,7 @@ def run_and_draw(gn, gdata, iterations, draw_interval=3, color_scales = None, lo
 
 
 ## GRAPH GENERATION
+## This code is DEPRECATED; see data_generation.py
 
 def generate_grid_edge_index(n):
     froms = []
@@ -102,7 +103,7 @@ def generate_grid_edge_index(n):
 
 
 ## TRAINING DATA GENERATION
-
+## This code is DEPRECATED; see data_generation.py
 
 def generate_graphs_from_connections(edge_index, node_feature_num, num=10):
     """Takes an edge index and returns graphs that have that edge structure,

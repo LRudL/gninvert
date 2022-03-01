@@ -4,22 +4,9 @@ from gninvert.gnns import LinearGNN
 from gninvert.graph_compare import model_steps_compare
 from gninvert.functions import generate_training_data
 from gninvert.training import fit
+import data_generation
 import itertools
 import tqdm.notebook as tq
-
-
-diffusionGN = MultiDiffusionGN([0.1, 0.1])
-
-x_train, y_train = generate_training_data(diffusionGN)
-
-train_fraction = 0.75
-
-train_i = round(len(x_train) * train_fraction)
-train_x = x_train[0:train_i]
-valid_x = x_train[train_i:]
-train_y = y_train[0:train_i]
-valid_y = y_train[train_i:]
-
 
 def param_settings(d):
     param_tuples = itertools.product(*d.values())
@@ -32,7 +19,7 @@ def param_settings(d):
     ]
     return param_dicts 
 
-def train_on_param_settings(settings, model, model_eval):
+def train_on_param_settings(settings, model, model_eval, training_data):
     device = t.device('cuda' if t.cuda.is_available() else 'cpu')
     optim = t.optim.Adam(
         model.parameters(),
@@ -52,8 +39,8 @@ def train_on_param_settings(settings, model, model_eval):
         model=model,
         loss_func=settings['loss_func'],
         opt=optim,
-        train_ds=(train_x, train_y),
-        valid_ds= (valid_x, valid_y),
+        train_ds=training_data.train_ds(),
+        valid_ds=training_data.valid_ds(),
         batch_size=settings['batch_size'],
         lr_scheduler=scheduler,
         progress_bar = True,
@@ -63,12 +50,12 @@ def train_on_param_settings(settings, model, model_eval):
 
     return model, model_eval(model), perf_history
 
-def hpsearch(params, model_constructor, model_score_fn):
+def hpsearch(params, model_constructor, model_score_fn, training_data=None):
     settings_list = param_settings(params)
     results = []
     for settings in tq.tqdm(settings_list):
         final_model, eval_val, perf_history = train_on_param_settings(
-            settings, model_constructor(), model_score_fn
+            settings, model_constructor(), model_score_fn, training_data
         )
         results.append({
             "settings": settings,
@@ -77,3 +64,5 @@ def hpsearch(params, model_constructor, model_score_fn):
             "val_loss_history": perf_history
         })
     return sorted(results, key = lambda x : x["score"])
+
+

@@ -46,6 +46,7 @@ class ActivatorInhibitorGN(ptgeo.nn.MessagePassing):
         self.act_diff_const = act_diff_const
         self.inh_diff_const = inh_diff_const
         self.growth_const = growth_const
+        self.node_features = 3
 
     def message(self, x_i, x_j):
         return self.diff_consts * (x_j[:, 1:] - x_i[:, 1:])

@@ -121,6 +121,8 @@ def model_compare(model, base, gdata=None, iterations=20):
     ax.plot(avg_abs_difs, "-o", label="Avg abs. diffs.")
     ax.plot(min_abs_difs, "-o", label="Min abs. diffs.")
     plt.title("Max/avg/min absolute differences over run")
+    plt.xlabel("Iterations")
+    plt.ylabel("Absolute feature value difference ")
     plt.legend()
     plt.show()
 
@@ -139,6 +141,8 @@ def model_compare(model, base, gdata=None, iterations=20):
     ax2.plot(model_sums, "-+", label="model feature sum")
     ax2.plot(base_sums, "-+", label="base feature sum")
     plt.title("Conservation law?")
+    plt.xlabel("Iterations")
+    plt.ylabel("Sum of feature values")
     plt.legend()
     plt.show()
     

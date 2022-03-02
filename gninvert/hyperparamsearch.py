@@ -4,7 +4,7 @@ from gninvert.gnns import LinearGNN
 from gninvert.graph_compare import model_steps_compare
 from gninvert.functions import generate_training_data
 from gninvert.training import fit
-import data_generation
+import gninvert.data_generation
 import itertools
 import tqdm.notebook as tq
 

@@ -20,10 +20,12 @@ def loss_batch(
     if regularization != False:
         reg = None
         for W in model.parameters():
+            #print(W)
+            #print(W.norm(reg_norm))
             if reg is None:
                 reg = W.norm(reg_norm)
             else:
-                reg = reg + (W**reg_norm).sum()
+                reg = reg + W.norm(reg_norm)
         loss += regularization * reg
     
     if opt is not None:

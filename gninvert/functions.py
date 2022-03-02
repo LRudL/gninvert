@@ -11,6 +11,10 @@ import time
 def randrange(n, vmin, vmax):
     return (vmax - vmin) * np.random.rand(n) + vmin
 
+def listify_dict(d, repeats=1):
+    return {
+        key : [d[key]] * repeats for key in d.keys()
+    }
 
 def run_GN(
         gn, iterations, data,
@@ -74,6 +78,9 @@ def run_and_draw(gn, gdata, iterations, draw_interval=3, color_scales = None, lo
                 print(data.x.tolist())
             gdisplay(data, color_scales)
     return run_GN(gn, iterations, gdata, drawer)
+
+
+
 
 
 ## GRAPH GENERATION

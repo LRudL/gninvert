@@ -6,6 +6,7 @@ class SingleDiffusionGN(ptgeo.nn.MessagePassing):
         super().__init__(aggr='add')
         self.diffusion_constant = diffusion_constant
         self.node_features = 1
+        self.message_features = 1
     
     def message(self, x_i, x_j):
         x_target = x_i
@@ -28,6 +29,7 @@ class MultiDiffusionGN(ptgeo.nn.MessagePassing):
         super().__init__(aggr='add')
         self.diffusion_constants = t.tensor(diffusion_constants)
         self.node_features = len(diffusion_constants)
+        self.message_features = self.node_features
     
     def message(self, x_i, x_j):
         return self.diffusion_constants * (x_j - x_i)
@@ -47,6 +49,7 @@ class ActivatorInhibitorGN(ptgeo.nn.MessagePassing):
         self.inh_diff_const = inh_diff_const
         self.growth_const = growth_const
         self.node_features = 3
+        self.message_features = 2
 
     def message(self, x_i, x_j):
         return self.diff_consts * (x_j[:, 1:] - x_i[:, 1:])

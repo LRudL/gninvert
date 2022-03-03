@@ -6,7 +6,7 @@ class LinearGNN(ptgeo.nn.MessagePassing):
         super().__init__(aggr='add')
         self.m1 = t.nn.Linear(node_features * 2, node_features)
         self.u1 = t.nn.Linear(node_features * 2, node_features)
-        self.num_node_features = node_features
+        self.node_features = node_features
     
     def message(self, x_i, x_j):
         inputs = t.cat([x_i, x_j], 1)
@@ -44,8 +44,8 @@ class GNN_3Layer(ptgeo.nn.MessagePassing):
         )
         if final_gelu:
             self.u = t.nn.Sequential(self.u, t.nn.GELU())
-        self.num_node_features = node_features
-        self.num_message_features = message_features
+        self.node_features = node_features
+        self.message_features = message_features
         self.hidden_size = hidden_size
         self.final_gelu = final_gelu
     

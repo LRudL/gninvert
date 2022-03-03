@@ -111,8 +111,10 @@ def model_compare(model, base, gdata=None, iterations=20):
     ax.plot(max_rel_difs, "-o", label="Max rel. diffs.")
     ax.plot(avg_rel_difs, "-o", label="Avg rel. diffs.")
     ax.plot(min_rel_difs, "-o", label="Min rel. diffs.")
-    ax.set_ylim([1.0, 2.5])
+    ax.set_ylim([1.0, 1.2])
     plt.title("Max/avg/min relative differences over run")
+    plt.xlabel("Iterations")
+    plt.ylabel("Relative feature value difference")
     plt.legend()
     plt.show()
     

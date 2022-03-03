@@ -50,7 +50,11 @@ def train_on_param_settings(settings, model, model_eval, training_data):
 
     return model, model_eval(model), perf_history
 
-def hpsearch(params, model_constructor, model_score_fn, training_data=None):
+def hpsearch(params, model_constructor, model_score_fn, training_data=None, gn=None):
+    if gn != None and training_data != None:
+        training_data = get_TrainingData(gn)
+    if training_data == None:
+        raise Exception("No training data on which to train in hpsearch!")
     settings_list = param_settings(params)
     results = []
     for settings in tq.tqdm(settings_list):

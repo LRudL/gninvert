@@ -72,7 +72,64 @@ class ActivatorInhibitorGN(ptgeo.nn.MessagePassing):
 
     def forward(self, gdata):
         return self.propagate(gdata.edge_index, x=gdata.x)
+
+class FullActInhGN(ptgeo.nn.MessagePassing):
+    def __init__(self,
+                 spatial_const,
+                 temporal_const,
+                 growth_alpha,
+                 growth_rho,
+                 growth_scale,
+                 reaction_const,
+                 reference_conc = 1
+    ):
+        super().__init__(aggr='add')
+        self.spatial_const = spatial_const
+        self.temporal_const = temporal_const
+        self.growth_alpha = growth_alpha
+        self.growth_rho = growth_rho
+        self.growth_scale = growth_scale
+        self.reaction_const = reaction_const
+        self.reference_conc = reference_conc
+        self.eps = 0.01
+        self.node_features = 3
+        self.message_features = 2
+
+    def message(self, x_i, x_j):
+        consts = t.tensor([
+            self.spatial_const * self.temporal_const,
+            self.temporal_const
+        ])
+        return consts * (x_j[:, 1:] - x_i[:, 1:])
+
+    def update(self, aggr_out, x):
+        # give things names for convenience:
+        vol = x[:, 0] # cell sizes
+        act_conc = x[:, 1] # activator concentration
+        inh_conc = x[:, 2] # inhibitor concentration
+
+        g = (act_conc / vol)**self.growth_alpha
+        growth = g / (self.growth_rho**self.growth_alpha + g) * self.growth_scale
+
+        delta_act = aggr_out[:, 0]
+        delta_act += (act_conc**2) / (inh_conc + self.eps) - act_conc
+        delta_act *= self.reaction_const
+
+        delta_inh = aggr_out[:, 1]
+        delta_inh += (act_conc**2) / (self.reference_conc * vol + self.eps) - inh_conc
+        delta_inh *= self.reaction_const
         
+        delta_vec = t.cat([
+            growth.unsqueeze(1),
+            delta_act.unsqueeze(1),
+            delta_inh.unsqueeze(1)
+        ], dim=1)
+        
+        result = x + delta_vec
+        return result
+
+    def forward(self, gdata):
+        return self.propagate(gdata.edge_index, x=gdata.x)
 
 
 def component_fns_to_vector_fn(component_fns):

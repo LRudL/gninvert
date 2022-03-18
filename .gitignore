@@ -12,6 +12,9 @@ __pycache__/
 # PySR
 hall_of_fame*
 
+# Emacs temporary files
+*~
+
 # Distribution / packaging
 .Python
 build/

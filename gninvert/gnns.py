@@ -1,5 +1,6 @@
 import torch as t
 import torch_geometric as ptgeo
+from gninvert.nn import GeneralLinearFullNet
 
 class LinearGNN(ptgeo.nn.MessagePassing):
     def __init__(self, node_features):

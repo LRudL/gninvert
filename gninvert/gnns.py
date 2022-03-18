@@ -30,20 +30,35 @@ class GNN_3Layer(ptgeo.nn.MessagePassing):
         super().__init__(aggr='add')
         if message_features == None:
             message_features = node_features
-        self.m = t.nn.Sequential(
-            t.nn.Linear(node_features * 2, hidden_size),
-            t.nn.GELU(),
-            t.nn.Linear(hidden_size, message_features)
+        #self.m = t.nn.Sequential(
+        #t.nn.Linear(node_features * 2, hidden_size),
+        #t.nn.GELU(),
+        #    t.nn.Linear(hidden_size, message_features)
+        #)
+        #if final_gelu:
+        #    self.m = t.nn.Sequential(self.m, t.nn.GELU())
+        #self.u = t.nn.Sequential(
+        #    t.nn.Linear(node_features + message_features, hidden_size),
+        #    t.nn.GELU(),
+        #    t.nn.Linear(hidden_size, node_features)
+        #)
+        #if final_gelu:
+        #    self.u = t.nn.Sequential(self.u, t.nn.GELU())
+
+        self.m = GeneralLinearFullNet(
+            in_features = node_features * 2,
+            out_features = message_features,
+            hidden_sizes = [hidden_size],
+            nonlinearity = t.nn.GELU(),
+            end_with_nonlinearity = final_gelu
         )
-        if final_gelu:
-            self.m = t.nn.Sequential(self.m, t.nn.GELU())
-        self.u = t.nn.Sequential(
-            t.nn.Linear(node_features + message_features, hidden_size),
-            t.nn.GELU(),
-            t.nn.Linear(hidden_size, node_features)
+        self.u = GeneralLinearFullNet(
+            in_features = node_features + message_features,
+            out_features = node_features,
+            hidden_sizes = [hidden_size],
+            nonlinearity = t.nn.GELU(),
+            end_with_nonlineraity = final_gelu
         )
-        if final_gelu:
-            self.u = t.nn.Sequential(self.u, t.nn.GELU())
         self.node_features = node_features
         self.message_features = message_features
         self.hidden_size = hidden_size

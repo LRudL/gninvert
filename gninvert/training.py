@@ -1,5 +1,5 @@
 import torch as t
-import tqdm.notebook as tq
+from tqdm.notebook import tqdm
 
 def graphs_loss_func(model, xb, yb, node_loss_func = t.nn.MSELoss()):
     result = [model(gdata) for gdata in xb]
@@ -16,12 +16,15 @@ def loss_batch(
         regularization=False,
         reg_norm=1
 ):
-    loss = graphs_loss_func(model, xb, yb, node_loss_func = loss_func)
+    if t.is_tensor(xb) and t.is_tensor(yb):
+        loss = loss_func(model(xb), yb)
+    elif not t.is_tensor(xb) and not t.is_tensor(yb): # ... then assume they're graph batches
+        loss = graphs_loss_func(model, xb, yb, node_loss_func = loss_func)
+    else:
+        raise Exception("Trying to compare graph batch with non-graph batch in loss_batch")
     if regularization != False:
         reg = None
         for W in model.parameters():
-            #print(W)
-            #print(W.norm(reg_norm))
             if reg is None:
                 reg = W.norm(reg_norm)
             else:
@@ -29,9 +32,9 @@ def loss_batch(
         loss += regularization * reg
     
     if opt is not None:
+        opt.zero_grad()
         loss.backward()
         opt.step()
-        opt.zero_grad()
     
     # loss.item(): pure numeric value of loss
     # also returns length of the batch, 
@@ -50,13 +53,14 @@ def fit(
     valid_x, valid_y = valid_ds
     perf_history = []
     lr_history = []
-    epoch_range = tq.tqdm(range(epochs)) if progress_bar else range(epochs)
+    epoch_range = tqdm(range(epochs)) if progress_bar else range(epochs)
     for epoch in epoch_range:
         
         model.train()
         
-        for i in range(0, len(train_x), batch_size):
-            end_i = min(i + batch_size, len(train_x))
+        for b in range(len(train_x) // batch_size):
+            i = b * batch_size
+            end_i = (b+1) * batch_size
             xb = train_x[i : end_i]
             yb = train_y[i : end_i]
             loss_batch(
@@ -75,16 +79,14 @@ def fit(
                                         loss_func,
                                         valid_x,
                                         valid_y)
-
-            if lr_scheduler is not None:
-                lr_scheduler.step(val_loss)
-
             perf_history.append(val_loss)
-            lr = lr_scheduler.optimizer.param_groups[0]['lr']
-            lr_history.append(lr)
-            if return_early_on_lr is not None:
-                if lr < return_early_on_lr:
-                    return perf_history
+            if lr_scheduler != None:
+                lr_scheduler.step(val_loss)
+                lr = lr_scheduler.optimizer.param_groups[0]['lr']
+                lr_history.append(lr)
+                if return_early_on_lr is not None:
+                    if lr < return_early_on_lr:
+                        return perf_history
             if epoch % 10 == 0 or epoch == epochs - 1:
                 if not progress_bar:
                     print(epoch, val_loss, lr)

@@ -2,16 +2,59 @@ import random
 from gninvert.functions import run_GN
 import torch as t
 import torch_geometric as ptgeo
+from functools import reduce
+
+def generic_shuffle(thing, things=None, seed=None):
+    """
+    Returns a shuffled version of `thing`, where `thing` is either a Python list or a tensor.
+    Optionally takes `seed`, which can be used for replicability.
+    Optionally takes `things`, a list/tensor of the same size as `thing`,
+    which should be shuffled using the same permutation as thing.
+    If `things` is passed, returns a list, where shuffled `thing` is the first element and
+    the other shuffled `things` follow.
+    Does not mutate anything.
+    `thing` must be of the same type as every element in `things`.
+    """
+    if seed == None:
+        seed = random.randint(0, 1000)
+    if type(thing) is list:
+        shuffled = thing.copy()
+        random.seed(seed)
+        random.shuffle(shuffled)
+    elif t.is_tensor(thing):
+        shuffled = thing.detach().clone()
+        t.manual_seed(seed)
+        shuffled = shuffled[t.randperm(thing.shape[0])]
+    else:
+        raise Exception(f"generic_shuffle cannot shuffle: {thing}")
+    if things != None:
+        for ti in things:
+            if type(ti) != type(thing):
+                raise Exception("Cannot generic_shuffle a mix of tensors and lists.")
+        shuffled_things = [generic_shuffle(ti, seed=seed) for ti in things]
+        return [shuffled] + shuffled_things
+    return shuffled
+
+def listlike_equals(ls1, ls2):
+    if t.is_tensor(ls1) and t.is_tensor(ls2):
+        return t.equal(ls1, ls2)
+    if (type(ls1) == list or type(ls1) == tuple) and (type(ls2) == list or type(ls2) == tuple):
+        if len(ls1) != len(ls2):
+            return False
+        if len(ls1) == 0 and len(ls2) == 0:
+            return True
+        return reduce(lambda a, b: a and b,
+                      [listlike_equals(item1, item2) for (item1, item2) in zip(ls1, ls2)])
+    return ls1 == ls2
 
 class TrainingData():
-    def __init__(self, xs, ys, train_fraction=0.75, shuffle=True):
+    def __init__(self, xs, ys, train_fraction=0.75, shuffle=True, shuffle_seed = None):
         if shuffle:
-            seed = random.randint(0, 100)
-            random.seed(seed)
-            random.shuffle(xs)
-            random.seed(seed)
-            random.shuffle(ys)
-            random.seed()
+            if shuffle_seed == None:
+                shuffle_seed = random.randint(0, 1000)
+            xs, ys = generic_shuffle(xs, [ys], shuffle_seed)
+        self.shuffled = shuffle
+        self.shuffle_seed = shuffle_seed
         self.xs = xs
         self.ys = ys
         train_i = round(len(xs) * train_fraction)
@@ -31,7 +74,17 @@ class TrainingData():
 
     def valid_size(self):
         return len(self.valid_x)
-        
+
+    def __repr__(self):
+        return f"<gninvert.data_generation.TrainingData, {self.train_size()} train size / \
+{self.valid_size()} validation size / shuffle {self.shuffled}>"
+
+    def __eq__(self, other):
+        if type(other) == type(self):
+            train_equal = listlike_equals(self.train_ds(), other.train_ds())
+            valid_equal = listlike_equals(self.valid_ds(), other.valid_ds())
+            return train_equal and valid_equal
+        return super.__eq__(self, other)
 
 def generate_grid_edge_index(n):
     froms = []

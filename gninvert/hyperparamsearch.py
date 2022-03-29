@@ -74,11 +74,11 @@ def hpsearch(
 ):
     """
     `params` is a dictionary of parameters. See train_on_param_settings to see which
-    values should be included.
+    values should be included. Parameters with integer keys are interpreted as arguments
+    to `model_constructor`.
     
-    `model_constructor` is either:
-    1. a function that generates a new copy of the model to train (w/o any args)
-    2. a list of such functions
+    `model_constructor` gets called with, in ascending order according to the (integer) key,
+    all params that have an integer key in `params` to produce the model to train.
     
     (optional) `model_score_fn` gives a score (bigger is better) to trained models.
     Note that validation loss history is always returned.
@@ -95,21 +95,22 @@ def hpsearch(
     settings_list = param_settings(params)
     results = []
     for settings in tqdm(settings_list):
-        model_list = [model_constructor] if callable(model_constructor) \
-            else model_constructor
-        if type(model_list) is not list:
-            raise Exception("model_constructor not callable and not a list.")
-        for model_fn in tqdm(model_list):
-            model = model_fn()
-            final_model, eval_val, perf_history = train_on_param_settings(
-                settings, model, model_score_fn, training_data
-            )
-            results.append({
-                "settings": settings,
-                "model": final_model,
-                "score": eval_val,
-                "val_loss_history": perf_history
-            })
+        model_arg_dict = {k : settings[k] for k in settings.keys() if type(k) == int}
+        model_args = [
+            pair[1] for pair in
+            sorted([(k, model_arg_dict[k]) for k in model_arg_dict.keys()],
+                   key = lambda pair : pair[0])
+        ]
+        model = model_constructor(*model_args)
+        final_model, eval_val, perf_history = train_on_param_settings(
+            settings, model, model_score_fn, training_data
+        )
+        results.append({
+            "settings": settings,
+            "model": final_model,
+            "score": eval_val,
+            "val_loss_history": perf_history
+        })
     if model_score_fn == None:
         sort_fn = lambda x : x["val_loss_history"][-1]
     else:

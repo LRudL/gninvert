@@ -14,6 +14,8 @@ hall_of_fame*
 
 # Emacs temporary files
 *~
+\#*
+.#*
 
 # Distribution / packaging
 .Python

@@ -4,10 +4,13 @@ from gninvert.gnns import LinearGNN
 from gninvert.graph_compare import model_steps_compare
 from gninvert.functions import generate_training_data
 from gninvert.training import fit
+import gninvert.dtree as dtree
 import gninvert.data_generation
 import itertools
 from tqdm.notebook import tqdm
 import matplotlib.pyplot as plt
+import numpy as np
+from functools import reduce
 
 def param_settings(d):
     param_tuples = itertools.product(*d.values())
@@ -127,4 +130,27 @@ def hpsearch(
             
     return results
 
-
+def get_hyperparam_dtree(
+        hp_results,
+        val_func = lambda res : res['val_loss_history'][-1],
+        eq_threshold = 1.0
+):
+    hp_results = list(filter(lambda res : not np.isnan(res['val_loss_history'][-1]), hp_results))
+    examples = [dtree.Example(res['settings'], val_func(res)) for res in hp_results]
+    params = {param_name : () for param_name in hp_results[0]['settings'].keys()}
+    for res in hp_results:
+        for param_name in res['settings'].keys():
+            if res['settings'][param_name] not in params[param_name]:
+                params[param_name] = tuple(list(params[param_name]) + [res['settings'][param_name]])
+    attributes = {
+        dtree.Attribute(param_name, tuple(params[param_name]))
+        for param_name in params.keys()
+    }
+    tree = dtree.decision_tree(
+        examples, attributes, examples,
+        dtree.log_variance_reduction_importance,
+        dtree.log_based_representative_value,
+        dtree.approx_equal_gen(threshold=eq_threshold)
+    )
+    return tree
+    

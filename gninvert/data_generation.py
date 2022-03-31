@@ -1,4 +1,5 @@
 import random
+import math
 from gninvert.functions import run_GN
 import torch as t
 import torch_geometric as ptgeo
@@ -75,6 +76,33 @@ class TrainingData():
     def valid_size(self):
         return len(self.valid_x)
 
+    @staticmethod
+    def graph_size_of_data(xs, ys):
+        if type(xs[0]) != ptgeo.data.data.Data or type(ys[0]) != ptgeo.data.data.Data:
+            raise Exception("Cannot find graph size for data that is not a torch_geometric graph")
+        nodes = 0
+        features = 0
+        edges = 0
+        for gdata in xs + ys:
+            nodes += gdata.x.shape[0]
+            features += gdata.x.shape[0] * gdata.x.shape[1]
+            edges += gdata.edge_index.shape[1]#
+        return nodes, features, edges
+
+    def total_graph_size(self):
+        train_nodes, train_features, train_edges = TrainingData.graph_size_of_data(
+            self.train_ds()[0], self.train_ds()[1]
+        )
+        valid_nodes, valid_features, valid_edges = TrainingData.graph_size_of_data(
+            self.valid_ds()[0], self.valid_ds()[0]
+        )
+        return {
+            'nodes':     train_nodes + valid_nodes,
+            'features':  train_features + valid_features,
+            'edges':     train_edges + valid_edges
+        }
+        
+
     def __repr__(self):
         return f"<gninvert.data_generation.TrainingData, {self.train_size()} train size / \
 {self.valid_size()} validation size / shuffle {self.shuffled}>"
@@ -118,7 +146,7 @@ def generate_graphs_from_connections(edge_index, node_feature_num, num=10):
         x = uniform.sample((nodes.size()[0], node_feature_num))
         graphs.append(ptgeo.data.Data(edge_index=edge_index, x=x))
     return graphs
-
+ 
 def generate_samples_from_graph(gn, iterations, gdata):
     """Generates pairs of [graph before gn step, graph after gn step]"""
     data_at_t = []
@@ -131,12 +159,10 @@ g_edge_index1 = t.tensor(
     [[0, 1, 1, 2, 0, 2, 2, 3, 3, 4],
      [1, 0, 2, 1, 2, 0, 3, 2, 4, 3]],
     dtype=t.long)
-
 g_edge_index2 = t.tensor(
     [[0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6],
      [1, 2, 3, 4, 5, 6, 0, 0, 0, 0, 0, 0]],
     dtype=t.long)
-
 g_edge_index3 = t.tensor(
     [[0, 1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1],
      [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 0]],
@@ -161,14 +187,41 @@ def generate_training_data(gn, edge_indices=None, graphs_per_edge_index=30, step
         y_train += y_train2
     return (x_train, y_train)
 
+def generate_big_training_data(gn, graph_size=1000, graph_number=8, steps_per_graph=2):
+    """Generate training data based on a GN, using LARGE graphs instead of many small ones"""
+    x_train = []
+    y_train = []
+    for _ in range(graph_number):
+        edge_index = generate_grid_edge_index(int(graph_size // math.sqrt(graph_size)))
+        graph = generate_graphs_from_connections(edge_index,
+                                                 node_feature_num = gn.node_features,
+                                                 num=1)[0]
+        (x_train_add, y_train_add) = generate_samples_from_graph(gn, steps_per_graph, graph)
+        x_train += x_train_add
+        y_train += y_train_add
+    return (x_train, y_train)
+
 def get_TrainingData(
         gn,
         train_fraction = 0.75,
         shuffle=True,
         edge_indices=None,
         graphs_per_edge_index=50,
-        steps_per_graph=4
+        graphs=None,
+        steps_per_graph=4,
+        graph_size = 1000,
+        big = False
 ):
-    """Returns a TrainingData object generated based on the GN provided""" 
-    xs, ys = generate_training_data(gn, edge_indices, graphs_per_edge_index, steps_per_graph)
+    """Returns a TrainingData object generated based on the GN provided"""
+    # aargh horrible backwards-compatibility messes for older Jupyter notebooks: 
+    if graphs == None:
+        graphs = graphs_per_edge_index
+    if graphs_per_edge_index == None:
+        graphs_per_edge_index = graphs
+    if big:
+        xs, ys = generate_big_training_data(gn,
+                                            graph_size=graph_size,
+                                            graph_number=graphs) # <- make sure this isn't huge!
+    else:
+        xs, ys = generate_training_data(gn, edge_indices, graphs_per_edge_index, steps_per_graph)
     return TrainingData(xs, ys, shuffle=shuffle, train_fraction=train_fraction)

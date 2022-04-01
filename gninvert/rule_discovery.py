@@ -36,7 +36,8 @@ def find_model(
             5: True        # (message_)end_with_nonlinearity
         },
         hyperparam_overrides={},
-        best_of = 1
+        best_of = 1,
+        seed = None
 ):
     node_features = gn_data.train_ds()[0][0].x.shape[1]
     print(f"Number of node features: {node_features}")
@@ -71,7 +72,8 @@ def find_model(
 
     hp_results = hpsearch(
         hyperparam_settings, gnn, training_data = gn_data, verbose = True,
-        rerun_times = best_of
+        rerun_times = best_of,
+        seed = seed
     )
 
     return hp_results

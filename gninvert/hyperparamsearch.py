@@ -74,7 +74,8 @@ def hpsearch(
         model_constructor,
         model_score_fn=None, training_data=None, gn=None,
         verbose=False,
-        rerun_times=1
+        rerun_times=1,
+        seed = None
 ):
     """
     `params` is a dictionary of parameters. See train_on_param_settings to see which
@@ -92,6 +93,8 @@ def hpsearch(
     (optional) `gn` is the graph network. If `training_data` is `None`,
     the graph network is used to generate training data using default settings.
     """
+    if seed != None:
+        t.manual_seed(seed)
     if gn != None and training_data == None:
         training_data = get_TrainingData(gn)
     if training_data == None:

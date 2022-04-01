@@ -23,8 +23,6 @@ def get_pysr_equations(
     model.fit(X, Y)
     return model
 
-abc = 123
-
 def get_best_eq(sr_obj):
     return [
         sr_obj.equations[i][sr_obj.equations[i].score == \
@@ -33,12 +31,9 @@ def get_best_eq(sr_obj):
         for i in range(len(sr_obj.equations))
     ]
 
-
-
-
 def pysr_test():
-    X = 2 * np.random.randn(100, 5)
-    y = 2.5382 * np.cos(X[:, 3]) + X[:, 0] ** 2 - 0.5
+    X = 4.321 * np.random.randn(100, 5)
+    y = 1.234 * np.cos(X[:, 3]) + X[:, 0] ** 2 - 0.5
     model = PySRRegressor(
         niterations=5,
         binary_operators=["+", "*"],
@@ -54,10 +49,10 @@ def pysr_test():
     model.fit(X, y)
     return model
 
-
-
-
-def get_gplearn_equations(
+# prefer PySR to gplearn, but PySR is picky about its run environment,
+# so if you have better things to do with your time than fiddle with
+# pyenv, you can try using:
+def get_gplearn_equations( 
     dimensions, function, n=200,
 ):
     input_var_blocks = [

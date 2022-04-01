@@ -6,7 +6,8 @@ def graphs_loss_func(model, xb, yb, node_loss_func = t.nn.MSELoss()):
     losses = [node_loss_func(node_results, ygdata.x)
               for (node_results, ygdata) in
               zip(result, yb)]
-    return sum(losses)
+    loss = sum(losses)
+    return loss
 
 def loss_batch(
         model,

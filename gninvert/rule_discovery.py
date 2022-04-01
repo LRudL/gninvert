@@ -35,7 +35,8 @@ def find_model(
             4: t.nn.GELU,  # (message_)nonlinearity
             5: True        # (message_)end_with_nonlinearity
         },
-        hyperparam_overrides={}
+        hyperparam_overrides={},
+        best_of = 1
 ):
     node_features = gn_data.train_ds()[0][0].x.shape[1]
     print(f"Number of node features: {node_features}")
@@ -68,10 +69,12 @@ def find_model(
         # ... but we will still interface with hpsearch, because that is convenient, so:
         hyperparam_settings = {param : [value] for (param, value) in hyperparam_settings.items()}
 
-    hp_results = hpsearch(hyperparam_settings, gnn, training_data = gn_data, verbose = True)
+    hp_results = hpsearch(
+        hyperparam_settings, gnn, training_data = gn_data, verbose = True,
+        rerun_times = best_of
+    )
 
     return hp_results
-    
 
 def discover_rules(
         gn_data,

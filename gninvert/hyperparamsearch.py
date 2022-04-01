@@ -73,7 +73,8 @@ def hpsearch(
         params,
         model_constructor,
         model_score_fn=None, training_data=None, gn=None,
-        verbose=False
+        verbose=False,
+        rerun_times=1
 ):
     """
     `params` is a dictionary of parameters. See train_on_param_settings to see which
@@ -104,16 +105,17 @@ def hpsearch(
             sorted([(k, model_arg_dict[k]) for k in model_arg_dict.keys()],
                    key = lambda pair : pair[0])
         ]
-        model = model_constructor(*model_args)
-        final_model, eval_val, perf_history = train_on_param_settings(
-            settings, model, model_score_fn, training_data
-        )
-        results.append({
-            "settings": settings,
-            "model": final_model,
-            "score": eval_val,
-            "val_loss_history": perf_history
-        })
+        for _ in range(rerun_times):
+            model = model_constructor(*model_args)
+            final_model, eval_val, perf_history = train_on_param_settings(
+                settings, model, model_score_fn, training_data
+            )
+            results.append({
+                "settings": settings,
+                "model": final_model,
+                "score": eval_val,
+                "val_loss_history": perf_history
+            })
     if model_score_fn == None:
         sort_fn = lambda x : x["val_loss_history"][-1]
     else:

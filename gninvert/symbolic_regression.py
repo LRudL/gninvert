@@ -16,7 +16,8 @@ def get_pysr_equations(
     input_vars_concat = t.cat(input_var_blocks, dim=1).detach().numpy()
     outputs = function(*input_var_blocks).detach().numpy()
     model = PySRRegressor(
-        niterations=niterations
+        niterations=niterations,
+        variable_names = variable_names
     )
     X = input_vars_concat
     Y = outputs

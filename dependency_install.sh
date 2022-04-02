@@ -8,7 +8,7 @@ pip install gplearn
 
 pip install numpy
 
-pip install jupyter
+pip install jupyterlab
 
 pip install ipywidgets
 
@@ -17,6 +17,8 @@ pip install tqdm
 pip install matplotlib
 
 pip install networkx
+
+pip install einops
 
 if ! command -v julia &> /dev/null
 then

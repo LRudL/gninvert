@@ -30,4 +30,5 @@ The packages installed are:
 - tqdm (only required for notebook-related stuff)
 - matplotlib
 - networkx
+- einops
 - PySR

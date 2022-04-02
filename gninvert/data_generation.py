@@ -76,6 +76,19 @@ class TrainingData():
     def valid_size(self):
         return len(self.valid_x)
 
+    def is_x_type_graph(self):
+        if type(self.xs[0]) == ptgeo.data.data.Data:
+            return True
+        return False
+
+    def is_y_type_graph(self):
+        if type(self.ys[0]) == ptgeo.data.data.Data:
+            return True
+        return False
+
+    def are_types_graphs(self):
+        return (self.is_x_type_graph(), self.is_y_type_graph())
+
     @staticmethod
     def graph_size_of_data(xs, ys):
         if type(xs[0]) != ptgeo.data.data.Data or type(ys[0]) != ptgeo.data.data.Data:

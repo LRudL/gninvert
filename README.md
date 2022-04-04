@@ -25,6 +25,7 @@ The packages installed are:
 - [PyTorch Geometric](https://pytorch-geometric.readthedocs.io/en/latest/notes/installation.html)
 - [gplearn](https://gplearn.readthedocs.io/en/stable/installation.html)
 - NumPy
+- Pandas
 - Jupyter Lab (only required for notebook-related stuff)
 - ipywidgets (only required for notebook-related stuff)
 - tqdm (only required for notebook-related stuff)

@@ -8,6 +8,8 @@ pip install gplearn
 
 pip install numpy
 
+pip install pandas
+
 pip install jupyterlab
 
 pip install ipywidgets

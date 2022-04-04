@@ -1,5 +1,9 @@
 import torch as t
 import torch_geometric as ptgeo
+import pysr
+import pandas as pd
+
+from gninvert.graph_compare import model_steps_compare
 
 class SingleDiffusionGN(ptgeo.nn.MessagePassing):
     def __init__(self, diffusion_constant):
@@ -157,3 +161,49 @@ class EquationGN(ptgeo.nn.MessagePassing):
 
     def forward(self, gdata):
         return self.propagate(gdata.edge_index, x=gdata.x)
+
+class RecoveredGN(EquationGN):
+    def __init__(self, message_sr_result, update_sr_result, data_trained_on=None):
+        self.message_sr_result = message_sr_result
+        self.update_sr_result = update_sr_result
+        self.data_trained_on = data_trained_on
+
+        def message_lambda_wrap(tensor):
+            return message_sr_result.lambda_format(tensor)
+
+        def update_lambda_wrap(tensor):
+            return update_sr_result.lambda_format(tensor)
+        
+        super().__init__(message_sr_result.lambda_format, update_sr_result.lambda_format)
+
+    def save(self, fstr):
+        # these shenanigans are needed because the lambda formats cannot be pickled or dilled in any way
+        save_obj = {
+            'message_sr_result': self.message_sr_result.drop('lambda_format'),
+            'update_sr_result': self.update_sr_result.drop('lambda_format'),
+            'message_variable_order': self.message_sr_result.lambda_format._sympy_symbols,
+            'update_variable_order': self.update_sr_result.lambda_format._sympy_symbols,
+            'data_trained_on': self.data_trained_on
+        }
+        t.save(save_obj, fstr)
+
+    @staticmethod
+    def load(fstr):
+        saved = t.load(fstr)
+        message_sr_result = saved['message_sr_result']
+        update_sr_result = saved['update_sr_result']
+        message_lambda_format = pysr.sr.CallableEquation(saved['message_variable_order'],
+                                                         message_sr_result.sympy_format)
+        update_lambda_format = pysr.sr.CallableEquation(saved['update_variable_order'],
+                                                        update_sr_result.sympy_format)
+        message_sr_result = pd.concat([message_sr_result,
+                                       pd.Series([message_lambda_format],
+                                                 index=["lambda_format"])])
+        update_sr_result = pd.concat([update_sr_result,
+                                      pd.Series([update_lambda_format],
+                                                index=["lambda_format"])])
+        return RecoveredGN(message_sr_result, update_sr_result, saved["data_trained_on"])
+
+    def compare_to(self, other_gn, gdata=None, iterations=20):
+        # model_steps_compare will print out some graphs and stats on model similarity
+        model_steps_compare(self, other_gn, gdata, iterations)

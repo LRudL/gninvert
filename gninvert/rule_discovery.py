@@ -3,9 +3,11 @@ import os
 import torch as t
 import torch_geometric as ptgeo
 from functools import reduce
+import dill
 
 from gninvert.data_generation import get_TrainingData
 from gninvert.gnns import GNN_full
+from gninvert.gns import RecoveredGN
 from gninvert.hyperparamsearch import hpsearch
 from gninvert.symbolic_regression import get_pysr_equations
 
@@ -35,7 +37,7 @@ def find_model(
             'adam_weight_decay': 1e-6,
 
             # how patient are you?
-            'epochs': 100,
+            'epochs': 200,
             
             # ARGS TO gnn (in order):
             1: None,       # node_features
@@ -122,8 +124,8 @@ def find_rule_for_fn(
 def find_rules_for_model(
         model,
         arg_dims = None,
-        #save_location = False,
-        return_all = False
+        save_location = False,
+        data_trained_on = None
 ):
     if hasattr(model, 'message') and hasattr(model, 'update') and hasattr(model, 'propagate'):
         # then this should really be a GN
@@ -132,27 +134,27 @@ def find_rules_for_model(
         message_rule = find_rule_for_fn(
             model.message,
             message_arg_dims,
-            arg_names = ["xt", "xs"], # abbreviations for x_target and x_source
-            return_all = True
+            arg_names = ["xt", "xs"] # abbreviations for x_target and x_source
         )
         update_rule = find_rule_for_fn(
             model.update,
             update_arg_dims,
-            arg_names = ["xt", "a"], # abbreviations for x_target and aggregation
-            return_all = True
+            arg_names = ["xt", "a"] # abbreviations for x_target and aggregation
         )
-        to_return = (message_rule, update_rule)
+        to_return = RecoveredGN(message_rule, update_rule, data_trained_on)
+        # cannot save directly in any normal sensible way because pickling doesn't work on
+        # PySR's lambda_format equations
+        # Therefore, RecoveredGN implements a .save and a (static!) .load method
+        # for saving and loading in a way that works around these issues
+        # (each taking string path as an arg)
+        to_return.save(save_location)
     else:
-        to_return = find_rule_for_fn(model, arg_dims, return_all = True)
+        to_return = find_rule_for_fn(model, arg_dims, return_all = False)
+        t.save(to_return, save_location)
 
-    #if save_location != False:
-    #    t.save(to_return, save_location)
+    return to_return
 
-    if return_all:
-        return to_return
-    if type(to_return) == tuple:
-        return (to_return[0].get_best(), to_return[1].get_best())
-    return to_return.get_best()
+
 
 def discover_rules(
         data, # expected format: gninvert.data_generation.TrainingData
@@ -173,12 +175,11 @@ def discover_rules(
         os.makedirs(file_location + "/" + run_name)
         hpsearch_save_location = file_location + "/" + run_name + "/hpsearch"
         model_save_location = file_location + "/" + run_name + "/model"
-        #sr_save_location = file_location + "/" + run_name + "/sr"
-        #os.mkdir(sr_save_location)
+        sr_save_location = file_location + "/" + run_name + "/sr"
     else:
         hpsearch_save_location = False
         model_save_location = False
-        #sr_save_location = False
+        sr_save_location = False
 
     (xs_are_graphs, ys_are_graphs) = data.are_types_graphs()
     
@@ -196,10 +197,12 @@ def discover_rules(
 
     print("INVERTING")
 
+    arg_dims = None if xs_are_graphs and ys_are_graphs else data.train_ds()[0][0].shape[0]
     rules = find_rules_for_model(
         model,
-        arg_dims = None if xs_are_graphs and ys_are_graphs else data.train_ds()[0][0].shape[0]#,
-        #save_location = sr_save_location
+        arg_dims = arg_dims,
+        save_location = sr_save_location,
+        data_trained_on = data
     )
 
     return rules

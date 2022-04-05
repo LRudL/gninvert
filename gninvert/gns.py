@@ -135,7 +135,6 @@ class FullActInhGN(ptgeo.nn.MessagePassing):
     def forward(self, gdata):
         return self.propagate(gdata.edge_index, x=gdata.x)
 
-
 def component_fns_to_vector_fn(component_fns):
     def fn(in_tensor):
         comps = [comp_fn(in_tensor) for comp_fn in component_fns]
@@ -162,27 +161,42 @@ class EquationGN(ptgeo.nn.MessagePassing):
     def forward(self, gdata):
         return self.propagate(gdata.edge_index, x=gdata.x)
 
+def do_fn_unless_list(thing, fn):
+    if type(thing) == list or type(thing) == tuple:
+        return [do_fn_unless_list(item, fn) for item in thing]
+    return fn(thing)
+
+def take_props(obj, props):
+    if len(props) == 0:
+        return obj
+    return take_props(getattr(obj, props[0]), props[1:])
+
+def take_prop_unless_list(thing, *props):
+    return do_fn_unless_list(thing, lambda item : take_props(item, props))
+
 class RecoveredGN(EquationGN):
     def __init__(self, message_sr_result, update_sr_result, data_trained_on=None):
         self.message_sr_result = message_sr_result
         self.update_sr_result = update_sr_result
         self.data_trained_on = data_trained_on
 
-        def message_lambda_wrap(tensor):
-            return message_sr_result.lambda_format(tensor)
-
-        def update_lambda_wrap(tensor):
-            return update_sr_result.lambda_format(tensor)
-        
-        super().__init__(message_sr_result.lambda_format, update_sr_result.lambda_format)
+        super().__init__(take_prop_unless_list(self.message_sr_result, 'lambda_format'),
+                         take_prop_unless_list(self.update_sr_result, 'lambda_format'))
 
     def save(self, fstr):
         # these shenanigans are needed because the lambda formats cannot be pickled or dilled in any way
+        # + even more shenanigans because can have either lists of sr result objs or just one
         save_obj = {
-            'message_sr_result': self.message_sr_result.drop('lambda_format'),
-            'update_sr_result': self.update_sr_result.drop('lambda_format'),
-            'message_variable_order': self.message_sr_result.lambda_format._sympy_symbols,
-            'update_variable_order': self.update_sr_result.lambda_format._sympy_symbols,
+            'message_sr_result': do_fn_unless_list(self.message_sr_result,
+                                                   lambda res : res.drop('lambda_format')),
+            'update_sr_result': do_fn_unless_list(self.update_sr_result,
+                                                  lambda res : res.drop('lambda_format')),
+            'message_variable_order': take_prop_unless_list(self.message_sr_result,
+                                                            'lambda_format',
+                                                            '_sympy_symbols'),
+            'update_variable_order': take_prop_unless_list(self.update_sr_result,
+                                                           'lambda_format',
+                                                           '_sympy_symbols'),
             'data_trained_on': self.data_trained_on
         }
         t.save(save_obj, fstr)
@@ -192,17 +206,17 @@ class RecoveredGN(EquationGN):
         saved = t.load(fstr)
         message_sr_result = saved['message_sr_result']
         update_sr_result = saved['update_sr_result']
-        message_lambda_format = pysr.sr.CallableEquation(saved['message_variable_order'],
-                                                         message_sr_result.sympy_format)
-        update_lambda_format = pysr.sr.CallableEquation(saved['update_variable_order'],
-                                                        update_sr_result.sympy_format)
-        message_sr_result = pd.concat([message_sr_result,
-                                       pd.Series([message_lambda_format],
-                                                 index=["lambda_format"])])
-        update_sr_result = pd.concat([update_sr_result,
-                                      pd.Series([update_lambda_format],
-                                                index=["lambda_format"])])
-        return RecoveredGN(message_sr_result, update_sr_result, saved["data_trained_on"])
+        def process_sr_res_el(res, variable_order_name):
+            lambda_format = pysr.sr.CallableEquation(saved[variable_order_name],
+                                                     res.sympy_format)
+            return pd.concat([res,
+                              pd.Series([lambda_format],
+                                        index=["lambda_format"])])
+        return RecoveredGN(do_fn_unless_list(message_sr_result,
+                                             lambda res : process_sr_res_el(res, 'message_variable_order')),
+                           do_fn_unless_list(update_sr_result,
+                                             lambda res : process_sr_res_el(res, 'update_variable_order')),
+                           saved["data_trained_on"])
 
     def compare_to(self, other_gn, gdata=None, iterations=20):
         # model_steps_compare will print out some graphs and stats on model similarity

@@ -8,8 +8,12 @@ import dill
 from gninvert.data_generation import get_TrainingData
 from gninvert.gnns import GNN_full
 from gninvert.gns import RecoveredGN
-from gninvert.hyperparamsearch import hpsearch
+from gninvert.hyperparamsearch import hpsearch, view_hp_results_graph
 from gninvert.symbolic_regression import get_pysr_equations
+
+HPSEARCH_SAVE_LOC = "/hpsearch"
+MODEL_SAVE_LOC = "/model"
+SR_SAVE_LOC = "/sr"
 
 def find_model(
         data, # expected format: gninvert.data_generation.TrainingData
@@ -147,7 +151,7 @@ def find_rules_for_model(
         # Therefore, RecoveredGN implements a .save and a (static!) .load method
         # for saving and loading in a way that works around these issues
         # (each taking string path as an arg)
-        to_return.save(save_location)
+        #to_return.save(save_location)
     else:
         to_return = find_rule_for_fn(model, arg_dims, return_all = False)
         t.save(to_return, save_location)
@@ -173,9 +177,9 @@ def discover_rules(
             os.mkdir(file_location)
     if save_to_file:
         os.makedirs(file_location + "/" + run_name)
-        hpsearch_save_location = file_location + "/" + run_name + "/hpsearch"
-        model_save_location = file_location + "/" + run_name + "/model"
-        sr_save_location = file_location + "/" + run_name + "/sr"
+        hpsearch_save_location = file_location + "/" + run_name + HPSEARCH_SAVE_LOC
+        model_save_location = file_location + "/" + run_name + MODEL_SAVE_LOC
+        sr_save_location = file_location + "/" + run_name + SR_SAVE_LOC
     else:
         hpsearch_save_location = False
         model_save_location = False
@@ -228,3 +232,12 @@ def invert_gn(
         hyperparam_overrides=hyperparam_overrides,
         models_per_hp_setting=models_per_hp_setting
     )
+
+def view_run_results(fpath):
+    hpresults = t.load(fpath + HPSEARCH_SAVE_LOC)
+    model = t.load(fpath + MODEL_SAVE_LOC)
+    #sr = t.load(fpath + SR_SAVE_LOC)
+    view_hp_results_graph(hpresults)
+    print(model)
+    #print(sr)
+    return hpresults, model#, sr

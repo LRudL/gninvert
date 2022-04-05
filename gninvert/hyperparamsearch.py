@@ -125,15 +125,18 @@ def hpsearch(
         sort_fn = lambda x : x["score"]
     results =  sorted(results, key = sort_fn)
     if verbose:
-        val_series = [res['val_loss_history'] for res in results]
-        for p in val_series:
-            plt.plot(p)
-        plt.yscale('log')
-        plt.title('Validation loss histories in the hyperparameter search')
-        plt.ylabel('Validation loss')
-        plt.xlabel('Epoch')
+        view_hp_results_graph(results)
             
     return results
+
+def view_hp_results_graph(results):
+    val_series = [res['val_loss_history'] for res in results]
+    for p in val_series:
+        plt.plot(p)
+    plt.yscale('log')
+    plt.title('Validation loss histories in the hyperparameter search')
+    plt.ylabel('Validation loss')
+    plt.xlabel('Epoch')
 
 def get_hyperparam_dtree(
         hp_results,

@@ -96,7 +96,7 @@ def hpsearch(
     if seed != None:
         t.manual_seed(seed)
     if gn != None and training_data == None:
-        training_data = get_TrainingData(gn)
+        training_data = get_TrainingData(gn, graphs=20, big=True)
     if training_data == None:
         raise Exception("No training data on which to train in hpsearch!")
     settings_list = param_settings(params)

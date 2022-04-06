@@ -219,9 +219,14 @@ def invert_gn(
         nn_constructor=GNN_full,
         hyperparam_settings=None,
         hyperparam_overrides={},
-        models_per_hp_setting=1
+        models_per_hp_setting=1,
+        graphs_in_training_data=20,
+        training_graph_size=1000,
 ):
-    data = get_TrainingData(gn, big=True)
+    data = get_TrainingData(gn,
+                            graphs=graphs_in_training_data,
+                            graph_size=training_graph_size,
+                            big=True)
     return discover_rules(
         data=data,
         save_to_file=save_to_file,
@@ -236,8 +241,8 @@ def invert_gn(
 def view_run_results(fpath):
     hpresults = t.load(fpath + HPSEARCH_SAVE_LOC)
     model = t.load(fpath + MODEL_SAVE_LOC)
-    #sr = t.load(fpath + SR_SAVE_LOC)
+    sr = t.load(fpath + SR_SAVE_LOC)
     view_hp_results_graph(hpresults)
     print(model)
-    #print(sr)
-    return hpresults, model#, sr
+    print(sr)
+    return hpresults, model, sr

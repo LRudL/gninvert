@@ -1,6 +1,7 @@
 import torch as t
 import torch_geometric as ptgeo
 from gninvert.functions import gn_time_series
+from gninvert.data_generation import generate_graphs_from_connections
 import matplotlib.pyplot as plt
 #import networkx as nx
 #from ptgeo.utils import to_networkx, from_networkx
@@ -57,7 +58,8 @@ g_data = ptgeo.data.Data(x=g_x, edge_index=g_edge_index)
 
 def model_steps_compare(model, base, gdata=None, iterations=20):
     if gdata is None:
-        gdata = g_data
+        #gdata = g_data
+        gdata = generate_graphs_from_connections(g_data.edge_index, model.node_features, num=1)[0]
     model_steps = gn_time_series(model, iterations, gdata)[1:]
     base_steps = gn_time_series(base, iterations, gdata)[1:]
     rel_dif_stats = [
@@ -85,7 +87,11 @@ def model_steps_compare(model, base, gdata=None, iterations=20):
 
 def model_compare(model, base, gdata=None, iterations=20):
     if gdata == None:
-        gdata = g_data
+        if hasattr(model, 'node_features') or hasattr(base, 'node_features'):
+            model_ = model if hasattr(model, 'node_features') else base
+            gdata = generate_graphs_from_connections(g_data.edge_index, model_.node_features, num=1)[0]
+        else:
+            gdata = g_data
     info = model_steps_compare(model, base, gdata, iterations)
     gdata_pairs = list(zip(info["model_steps"], info["base_steps"]))
     max_rel_difs = info["relative"]["max_difs"]

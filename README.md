@@ -1,6 +1,6 @@
 # gninvert
 
-The purpose of this project is to explore (and develop tools for) the process of "inverting" graph networks (GNs): rather than generating data from a GN, we take data and try to figure out what GN produced it. Since a GN is parametrised by the message and update functions, this means finding those.
+The purpose of this project is to explore (and develop tools for) the process of "inverting" graph networks (GNs): rather than using a GN to simulate or make predictions, the goal is to find a GN with interpretable symbolic message and update functions that might have generated a given data set.
 
 This is done in two ways:
 - First, train a graph neural network (GNN), i.e. make its message and update functions neural networks and train them to approximate the behaviour of certain time series data

@@ -151,7 +151,7 @@ def find_rules_for_model(
         # Therefore, RecoveredGN implements a .save and a (static!) .load method
         # for saving and loading in a way that works around these issues
         # (each taking string path as an arg)
-        #to_return.save(save_location)
+        to_return.save(save_location)
     else:
         to_return = find_rule_for_fn(model, arg_dims, return_all = False)
         t.save(to_return, save_location)

@@ -55,6 +55,10 @@ def fit(
     perf_history = []
     lr_history = []
     epoch_range = tqdm(range(epochs)) if progress_bar else range(epochs)
+
+    if len(train_x) < batch_size:
+        raise Exception(f"BATCH SIZE TOO LARGE! Train example length is only {len(train_x)}, batch size {batch_size}")
+    
     for epoch in epoch_range:
         
         model.train()

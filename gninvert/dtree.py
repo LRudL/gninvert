@@ -101,11 +101,11 @@ def decision_tree(
     example_vals = [example.val for example in examples]
     parent_vals = [example.val for example in parent_examples]
     if len(examples) == 0:
-        return LeafNode(representative_value_fn(parent_examples))
+        return LeafNode(representative_value_fn(parent_vals))
     elif equality_fn(example_vals):
         return LeafNode(representative_value_fn(example_vals))
     elif len(attributes) == 0:
-        return LeafNode(representative_value_fn(parent_examples))
+        return LeafNode(representative_value_fn(parent_vals))
     else:
         best_attr = argmax(attributes, lambda attr : importance_fn(attr, examples))
         assert type(best_attr) == Attribute

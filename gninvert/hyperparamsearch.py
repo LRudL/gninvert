@@ -153,6 +153,7 @@ def get_hyperparam_dtree(
     attributes = {
         dtree.Attribute(param_name, tuple(params[param_name]))
         for param_name in params.keys()
+        if len(params[param_name]) > 1
     }
     tree = dtree.decision_tree(
         examples, attributes, examples,

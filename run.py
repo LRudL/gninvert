@@ -61,6 +61,24 @@ hps = {
         3: [[64], [256], [1024], [32, 32], [16, 16, 16]],
         4: [t.nn.GELU],
         5: [True, False]
+    },
+    'minimal': {
+        'loss_func': [t.nn.MSELoss()],
+        'optimizer': ['adam'],
+        'regularization_coefficient': [False],
+        'regularization_norm': [1],
+        'starting_lr': [0.1],
+        'lr_scheduler_dec_factor': [0.2],
+        'lr_scheduler_patience': [25],
+        'lr_scheduler_cooldown': [1],
+        'batch_size': [2],
+        'adam_weight_decay': [1e-7],
+        'epochs': [200],
+        1: [None],
+        2: [None],
+        3: [[64]],
+        4: [t.nn.GELU],
+        5: [True]
     }
 }
 

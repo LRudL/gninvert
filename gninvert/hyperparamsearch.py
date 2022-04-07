@@ -7,7 +7,7 @@ from gninvert.training import fit
 import gninvert.dtree as dtree
 import gninvert.data_generation
 import itertools
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 from functools import reduce
@@ -129,10 +129,17 @@ def hpsearch(
             
     return results
 
-def view_hp_results_graph(results):
+def view_hp_results_graph(results, ordered=True):
     val_series = [res['val_loss_history'] for res in results]
-    for p in val_series:
-        plt.plot(p)
+    if ordered:
+        n = min(len(results), 3)
+        for i in range(n):
+            plt.plot(val_series[i], linewidth=3, c=['black', 'purple', 'blue'][i])
+        for i in range(n, len(results)):
+            plt.plot(val_series[i])
+    else:
+        for p in val_series:
+            plt.plot(p)
     plt.yscale('log')
     plt.title('Validation loss histories in the hyperparameter search')
     plt.ylabel('Validation loss')

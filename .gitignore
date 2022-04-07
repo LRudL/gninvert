@@ -12,6 +12,10 @@ __pycache__/
 # PySR
 hall_of_fame*
 
+# Non-code files
+models/*
+runs/*
+
 # Emacs temporary files
 *~
 \#*

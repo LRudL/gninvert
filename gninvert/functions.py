@@ -16,6 +16,11 @@ def listify_dict(d, repeats=1):
         key : [d[key]] * repeats for key in d.keys()
     }
 
+def sort_with(fn, lst):
+    paired = sorted([(fn(it), it) for it in lst],
+                    key = lambda x : x[0])
+    return [pair[1] for pair in paired]
+
 def run_GN(
         gn, iterations, data,
         log_fn = lambda i, x : i

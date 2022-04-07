@@ -24,7 +24,8 @@ def find_model(
         hyperparam_overrides={},
         best_of = 1,
         seed = None,
-        return_all = False
+        return_all = False,
+        model_selector_fn = lambda hp_results : hp_results[0]['model']
 ):
     if hyperparam_settings == None:
         hyperparam_settings = {
@@ -59,7 +60,10 @@ def find_model(
                 print(f"Defaulting to {node_features} message features")
                 hyperparam_settings[2] = node_features
                 # ^ this is a good catch-all choice
-                
+        if type(hyperparam_settings[1]) == list or type(hyperparam_settings[1]) == tuple:
+            hyperparam_settings[1] = [node_features if n == None else n
+                                      for n in hyperparam_settings[1]]
+    
     for param, value in hyperparam_overrides.items():
         if data.is_x_type_graph():
             if param == "node_features":
@@ -99,7 +103,7 @@ def find_model(
     
     if return_all:
         return hp_results
-    return hp_results[0]['model']
+    return model_selector_fn(hp_results)
 
 def find_rule_for_fn(
         fn,
@@ -168,7 +172,9 @@ def discover_rules(
         nn_constructor = GNN_full,
         hyperparam_settings = None,
         hyperparam_overrides = {},
-        models_per_hp_setting = 1
+        models_per_hp_setting = 1,
+        model_selector_fn = lambda hp_results : hp_results[0]['model'],
+        skip_invert = False
 ):
     if run_name == None:
         run_name = datetime.now().strftime("gninversion_%Y-%m-%d_%H:%M:%S")
@@ -196,9 +202,14 @@ def discover_rules(
         nn_constructor = nn_constructor,
         hyperparam_settings = hyperparam_settings,
         hyperparam_overrides = hyperparam_overrides,
-        best_of = models_per_hp_setting
+        best_of = models_per_hp_setting,
+        model_selector_fn = model_selector_fn
     )
 
+    if skip_invert:
+        print("skip_invert set to True; EXITING EARLY.")
+        return model
+    
     print("INVERTING")
 
     arg_dims = None if xs_are_graphs and ys_are_graphs else data.train_ds()[0][0].shape[0]
@@ -222,11 +233,25 @@ def invert_gn(
         models_per_hp_setting=1,
         graphs_in_training_data=20,
         training_graph_size=1000,
+        model_criterion = 'simulation'
 ):
     data = get_TrainingData(gn,
                             graphs=graphs_in_training_data,
                             graph_size=training_graph_size,
                             big=True)
+    if model_criterion == 'simulation':
+        model_selector_fn = lambda hp_results : sort_with(
+            lambda res : model_steps_compare(res['model'],
+                                             gn,
+                                             gdata=data.train_ds().a_graph(),
+                                             iterations=6)['absolute']['avg_difs'][-1],
+            hp_results)[0]
+    elif model_criterion == 'loss':
+        model_selector_fn = lambda hp_results : sort_with(
+            lambda res : res['val_loss'][-1],
+            hp_results)[0]
+    else:
+        raise Exception(f"Undefined model_criterion {model_criterion} in invert_gn. 'simulation' and 'loss' are valid values.")
     return discover_rules(
         data=data,
         save_to_file=save_to_file,
@@ -235,7 +260,8 @@ def invert_gn(
         nn_constructor=nn_constructor,
         hyperparam_settings=hyperparam_settings,
         hyperparam_overrides=hyperparam_overrides,
-        models_per_hp_setting=models_per_hp_setting
+        models_per_hp_setting=models_per_hp_setting,
+        model_selector_fn = model_selector_fn
     )
 
 def view_run_results(fpath):

@@ -108,7 +108,7 @@ def hpsearch(
             sorted([(k, model_arg_dict[k]) for k in model_arg_dict.keys()],
                    key = lambda pair : pair[0])
         ]
-        for _ in range(rerun_times):
+        for _ in tqdm(range(rerun_times), leave=False):
             model = model_constructor(*model_args)
             final_model, eval_val, perf_history = train_on_param_settings(
                 settings, model, model_score_fn, training_data

@@ -1,10 +1,14 @@
 import argparse
+import os
 
 import torch as t
 
 from gninvert.rule_discovery import find_model, find_rules_for_model, invert_gn
 from gninvert.gns import SingleDiffusionGN, MultiDiffusionGN, ActivatorInhibitorGN, FullActInhGN
 from gninvert.gnns import GNN_full
+
+os.makedirs("models", exist_ok=True)
+os.makedirs("runs", exist_ok=True)
 
 all_args = argparse.ArgumentParser()
 

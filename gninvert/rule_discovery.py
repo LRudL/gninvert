@@ -243,7 +243,8 @@ def invert_gn(
         models_per_hp_setting=1,
         graphs_in_training_data=20,
         training_graph_size=1000,
-        model_criterion = 'simulation'
+        model_criterion = 'simulation',
+        skip_invert = False
 ):
     if save_to_file == True:
         make_dir_for_run(file_location, run_name)
@@ -270,16 +271,20 @@ def invert_gn(
         hyperparam_settings=hyperparam_settings,
         hyperparam_overrides=hyperparam_overrides,
         models_per_hp_setting=models_per_hp_setting,
-        model_compare_fn = model_compare_fn
+        model_compare_fn=model_compare_fn,
+        skip_invert=skip_invert
     )
 
 def view_run_results(fpath):
     hpresults = t.load(fpath + HPSEARCH_SAVE_LOC)
     model = t.load(fpath + MODEL_SAVE_LOC)
-    sr = t.load(fpath + SR_SAVE_LOC)
+    try:
+        sr = t.load(fpath + SR_SAVE_LOC)
+    except:
+        sr = "couldn't load SR"
     gn = t.load(fpath + GN_SAVE_LOC)
     view_hp_results_graph(hpresults, ordered=True)
     model_compare(gn, model)
     #print(model)
-    #print(sr)
+    print(sr)
     #return hpresults, model, sr

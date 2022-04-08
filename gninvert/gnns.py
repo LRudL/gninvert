@@ -134,8 +134,9 @@ class GNN_full(ptgeo.nn.MessagePassing):
         inputs = t.cat([x_i, x_j], 1)
         # ^ [[x_i[0], x_j[0]], ...]
         out = self.m(inputs)
-        if self.message_hook != None:
-            self.message_hook(out)
+        if hasattr(self, 'message_hook'):
+            if self.message_hook != None:
+                self.message_hook(out)
         return out
     
     def update(self, aggr_out, x=None):

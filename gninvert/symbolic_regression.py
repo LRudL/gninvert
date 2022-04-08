@@ -4,7 +4,7 @@ from pysr import PySRRegressor
 import numpy as np
 
 def get_pysr_equations(
-        dimensions, function, n=200,
+        dimensions, function, n=1000,
         niterations = 5,
         variable_names = None,
         constraints = None

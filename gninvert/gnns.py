@@ -127,11 +127,16 @@ class GNN_full(ptgeo.nn.MessagePassing):
         self.update_nonlinearity = update_nonlinearity
         self.message_end_with_nonlinearity = message_end_with_nonlinearity
         self.update_end_with_nonlinearity = update_end_with_nonlinearity
+
+        self.message_hook = None
     
     def message(self, x_i, x_j):
         inputs = t.cat([x_i, x_j], 1)
         # ^ [[x_i[0], x_j[0]], ...]
-        return self.m(inputs)
+        out = self.m(inputs)
+        if self.message_hook != None:
+            self.message_hook(out)
+        return out
     
     def update(self, aggr_out, x=None):
         assert x is not None

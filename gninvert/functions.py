@@ -21,6 +21,12 @@ def sort_with(fn, lst):
                     key = lambda x : x[0])
     return [pair[1] for pair in paired]
 
+def copy_from(dictionary, props):
+    d = {}
+    for prop in props:
+        d[prop] = dictionary[prop]
+    return d
+
 def run_GN(
         gn, iterations, data,
         log_fn = lambda i, x : i

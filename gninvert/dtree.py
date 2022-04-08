@@ -20,12 +20,14 @@ class Example:
         return f"<EXAMPLE: val {self.val}, attributes: {self.attr_values}"
 
 class LeafNode:
-    def __init__(self, val):
+    def __init__(self, val, all_values):
         self.val = val
+        self.num = len(all_values)
+        self.all_values = all_values
         self.leaf = True
 
     def __repr__(self):
-        return f"<LEAF {self.val}>"
+        return f"<LEAF of avg.val {self.val, 1} with {self.num} examples and variance {np.var(self.all_values)}>"
 
 def indent_text(s, size=2):
     return s.replace("\n", "\n" + " "*size)
@@ -61,7 +63,7 @@ def argmax(args, fn):
 def log_based_representative_value(values):
     logsum = 0
     for val in values:
-        logsum += math.log(val)
+        logsum += math.log10(val)
     return logsum / len(values)
 
 def variance(vals):
@@ -69,7 +71,7 @@ def variance(vals):
 
 def approx_equal_gen(threshold):
     def f(vals):
-        return math.log(max(vals)) - math.log(min(vals)) < threshold
+        return math.log10(max(vals)) - math.log10(min(vals)) < threshold
     return f
 
 def split_on(getter, examples):
@@ -85,12 +87,12 @@ def split_on(getter, examples):
     return split_dict
 
 def log_variance_reduction_importance(attribute, examples):
-    prev_variance = variance([example.val for example in examples])
+    prev_variance = variance([math.log10(example.val) for example in examples])
     split_dict = split_on(lambda example : example.attr_values[attribute.name],
                           examples)
     total_var = 0
     for attr_val in split_dict.keys():
-        total_var += variance([math.log(example.val) for example in list(split_dict[attr_val])])
+        total_var += variance([math.log10(example.val) for example in list(split_dict[attr_val])])
     mean_var = total_var / len(list(split_dict.keys()))
     return prev_variance - mean_var
 
@@ -101,11 +103,11 @@ def decision_tree(
     example_vals = [example.val for example in examples]
     parent_vals = [example.val for example in parent_examples]
     if len(examples) == 0:
-        return LeafNode(representative_value_fn(parent_vals))
+        return LeafNode(representative_value_fn(parent_vals), 0)
     elif equality_fn(example_vals):
-        return LeafNode(representative_value_fn(example_vals))
+        return LeafNode(representative_value_fn(example_vals), example_vals)
     elif len(attributes) == 0:
-        return LeafNode(representative_value_fn(parent_vals))
+        return LeafNode(representative_value_fn(example_vals), example_vals)
     else:
         best_attr = argmax(attributes, lambda attr : importance_fn(attr, examples))
         assert type(best_attr) == Attribute

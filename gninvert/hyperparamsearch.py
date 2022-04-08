@@ -2,7 +2,7 @@ import torch as t
 from gninvert.gns import MultiDiffusionGN
 from gninvert.gnns import LinearGNN
 from gninvert.graph_compare import model_steps_compare
-from gninvert.functions import generate_training_data
+from gninvert.functions import generate_training_data, copy_from
 from gninvert.training import fit
 import gninvert.dtree as dtree
 import gninvert.data_generation
@@ -133,10 +133,10 @@ def view_hp_results_graph(results, ordered=True):
     val_series = [res['val_loss_history'] for res in results]
     if ordered:
         n = min(len(results), 3)
-        for i in range(n):
-            plt.plot(val_series[i], linewidth=3, c=['black', 'purple', 'blue'][i])
         for i in range(n, len(results)):
             plt.plot(val_series[i])
+        for i in range(n):
+            plt.plot(val_series[i], linewidth=3, c=['black', 'purple', 'blue'][i])
     else:
         for p in val_series:
             plt.plot(p)
@@ -151,17 +151,18 @@ def get_hyperparam_dtree(
         eq_threshold = 1.0
 ):
     hp_results = list(filter(lambda res : not np.isnan(res['val_loss_history'][-1]), hp_results))
-    examples = [dtree.Example(res['settings'], val_func(res)) for res in hp_results]
     params = {param_name : () for param_name in hp_results[0]['settings'].keys()}
     for res in hp_results:
         for param_name in res['settings'].keys():
             if res['settings'][param_name] not in params[param_name]:
                 params[param_name] = tuple(list(params[param_name]) + [res['settings'][param_name]])
-    attributes = {
-        dtree.Attribute(param_name, tuple(params[param_name]))
-        for param_name in params.keys()
-        if len(params[param_name]) > 1
-    }
+    params_with_choice = [param_name for param_name in params.keys()
+                          if len(params[param_name]) > 1]
+    attributes = {dtree.Attribute(param_name, tuple(params[param_name]))
+                  for param_name in params_with_choice}
+    examples = [dtree.Example(copy_from(res['settings'],
+                                        params_with_choice),
+                              val_func(res)) for res in hp_results]
     tree = dtree.decision_tree(
         examples, attributes, examples,
         dtree.log_variance_reduction_importance,

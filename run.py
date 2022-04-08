@@ -103,7 +103,7 @@ hps = {
         4: [t.nn.ReLU],
         5: [False]                           # improv
     },
-    'diff2_search':  {
+    'diff2_search':  { # see runs/diff2_try2_diff2 for results
         'loss_func': [t.nn.MSELoss()],
         'optimizer': ['adam'],
         'regularization_coefficient': [False, 1e-5, 1e-3],
@@ -114,13 +114,29 @@ hps = {
         'lr_scheduler_cooldown': [1],
         'batch_size': [2],
         'adam_weight_decay': [1e-7],
-        'epochs': [200],
+        'epochs': [500],
         1: [None], # node features - gets autofilled if None
         2: [None], # message features - gets autofilled if None
         3: [[16], [64], [8, 8], [32, 32], [8, 8, 8], [16, 16, 16]], # hidden sizes
         4: [t.nn.GELU], # nonlinearity
         5: [False] # nonlinearity at end
-    }
+    },
+    'diff2_precise': {
+        'loss_func': [t.nn.MSELoss()],
+        'optimizer': ['adam'],
+        'regularization_coefficient': [False],
+        'starting_lr': [0.1],
+        'lr_scheduler_dec_factor': [0.2],
+        'lr_scheduler_patience': [75],
+        'lr_scheduler_cooldown': [1],
+        'batch_size': [2],
+        'adam_weight_decay': [1e-7],
+        'epochs': [1000],
+        1: [None], # node features - gets autofilled if None
+        2: [None], # message features - gets autofilled if None
+        3: [[16], [64], [8, 8, 8], [16, 16, 16]], # hidden sizes
+        4: [t.nn.GELU], # nonlinearity
+        5: [False] # nonlinearity at end
 }
 
 skip_sr = args['skip'] != None 

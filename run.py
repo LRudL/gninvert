@@ -137,6 +137,7 @@ hps = {
         3: [[16], [64], [8, 8, 8], [16, 16, 16]], # hidden sizes
         4: [t.nn.GELU], # nonlinearity
         5: [False] # nonlinearity at end
+    }
 }
 
 skip_sr = args['skip'] != None 

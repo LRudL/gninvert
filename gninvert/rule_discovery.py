@@ -7,7 +7,7 @@ import dill
 
 from gninvert.functions import sort_with
 from gninvert.graph_compare import model_steps_compare, model_compare
-from gninvert.data_generation import get_TrainingData
+from gninvert.data_generation import get_TrainingData, sample_graph_from_gn
 from gninvert.gnns import GNN_full
 from gninvert.gns import RecoveredGN
 from gninvert.hyperparamsearch import hpsearch, view_hp_results_graph
@@ -17,6 +17,26 @@ HPSEARCH_SAVE_LOC = "/hpsearch"
 MODEL_SAVE_LOC = "/model"
 SR_SAVE_LOC = "/sr"
 GN_SAVE_LOC = "/gn"
+
+model_last_loss_fn = lambda res : res['val_loss'][-1]
+
+def model_pred_acc_tester_fn(model_or_hp_res, gn):
+    # gn: ground truth Graph Network
+    if type(model_or_hp_res) == dict:
+        model = model_or_hp_res['model']
+    else:
+        model = model_or_hp_res
+    diffs = [
+        model_steps_compare(model,
+                            gn,
+                            gdata=sample_graph_from_gn(gn, seed=42+i),
+                            iterations=6)['absolute']['avg_difs'][-1]
+        for i in range(5)
+    ]
+    return sum(diffs1) / len(diffs)
+
+model_pred_acc_fn_maker = lambda gn : (lambda res : model_pred_acc_tester_fn(res, gn))
+
 
 def make_dir_for_run(file_location, run_name):
     if not os.path.isdir(file_location):
@@ -184,7 +204,7 @@ def discover_rules(
         hyperparam_settings = None,
         hyperparam_overrides = {},
         models_per_hp_setting = 1,
-        model_compare_fn = lambda hp_results : hp_results[0]['model'],
+        model_compare_fn = lambda hp_result_obj : hp_result_obj['val_loss_history'][-1],
         skip_invert = False
 ):
     if run_name == None:
@@ -254,12 +274,10 @@ def invert_gn(
                             graph_size=training_graph_size,
                             big=True)
     if model_criterion == 'simulation':
-        model_compare_fn = lambda res : model_steps_compare(res['model'],
-                                                            gn,
-                                                            gdata=data.a_graph(),
-                                                            iterations=6)['absolute']['avg_difs'][-1]
+        # this needs to be defined here because it needs to get passed in the gn
+        model_compare_fn = model_pred_acc_fn_maker(gn)
     elif model_criterion == 'loss':
-        model_compare_fn = lambda res : res['val_loss'][-1]
+        model_compare_fn = model_last_loss_fn
     else:
         raise Exception(f"Undefined model_criterion {model_criterion} in invert_gn. 'simulation' and 'loss' are valid values.")
     return discover_rules(
@@ -287,4 +305,7 @@ def view_run_results(fpath):
     model_compare(gn, model)
     #print(model)
     print(sr)
-    #return hpresults, model, sr
+    if type(sr) == str:
+        return gn, hpresults, model
+    return gn, hpresults, model, sr
+    

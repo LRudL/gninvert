@@ -1,7 +1,7 @@
 import torch as t
 import torch_geometric as ptgeo
 from gninvert.functions import gn_time_series
-from gninvert.data_generation import generate_graphs_from_connections
+from gninvert.data_generation import generate_graphs_from_connections, sample_graph_from_gn
 import matplotlib.pyplot as plt
 #import networkx as nx
 #from ptgeo.utils import to_networkx, from_networkx
@@ -59,7 +59,7 @@ g_data = ptgeo.data.Data(x=g_x, edge_index=g_edge_index)
 def model_steps_compare(model, base, gdata=None, iterations=20):
     if gdata is None:
         #gdata = g_data
-        gdata = generate_graphs_from_connections(g_data.edge_index, model.node_features, num=1)[0]
+        gdata = sample_graph_from_gn(model, seed=42)#generate_graphs_from_connections(g_data.edge_index, model.node_features, num=1)[0]
     model_steps = gn_time_series(model, iterations, gdata)[1:]
     base_steps = gn_time_series(base, iterations, gdata)[1:]
     rel_dif_stats = [
@@ -89,7 +89,7 @@ def model_compare(model, base, gdata=None, iterations=20):
     if gdata == None:
         if hasattr(model, 'node_features') or hasattr(base, 'node_features'):
             model_ = model if hasattr(model, 'node_features') else base
-            gdata = generate_graphs_from_connections(g_data.edge_index, model_.node_features, num=1)[0]
+            gdata = sample_graph_from_gn(model_, seed=42)#generate_graphs_from_connections(g_data.edge_index, model_.node_features, num=1)[0]
         else:
             gdata = g_data
     info = model_steps_compare(model, base, gdata, iterations)
@@ -113,28 +113,27 @@ def model_compare(model, base, gdata=None, iterations=20):
     print(f"Smallest absolute difference: {min(min_abs_difs)}%")
 
     # graph relative differences
-    fig, ax = plt.subplots(1, 1)
-    ax.plot(max_rel_difs, "-o", label="Max rel. diffs.")
-    ax.plot(avg_rel_difs, "-o", label="Avg rel. diffs.")
-    ax.plot(min_rel_difs, "-o", label="Min rel. diffs.")
-    ax.set_ylim([1.0, 1.2])
-    plt.title("Max/avg/min relative differences over run")
-    plt.xlabel("Iterations")
-    plt.ylabel("Relative feature value difference")
-    plt.legend()
-    plt.show()
+    fig, ax = plt.subplots(1, 2)
+    ax[0].plot(max_rel_difs, "-o", label="Max rel. diffs.")
+    ax[0].plot(avg_rel_difs, "-o", label="Avg rel. diffs.")
+    ax[0].plot(min_rel_difs, "-o", label="Min rel. diffs.")
+    ax[0].set_ylim([1.0, 1.2])
+    ax[0].set_title("Relative model differences")
+    ax[0].set_xlabel("Iterations")
+    ax[0].set_ylabel("Relative feature value difference")
+    ax[0].legend()
     
-    fig, ax = plt.subplots(1, 1)
-    ax.plot(max_abs_difs, "-o", label="Max abs. diffs.")
-    ax.plot(avg_abs_difs, "-o", label="Avg abs. diffs.")
-    ax.plot(min_abs_difs, "-o", label="Min abs. diffs.")
-    plt.title("Max/avg/min absolute differences over run")
-    plt.xlabel("Iterations")
-    plt.ylabel("Absolute feature value difference ")
-    plt.legend()
+    ax[1].plot(max_abs_difs, "-o", label="Max abs. diffs.")
+    ax[1].plot(avg_abs_difs, "-o", label="Avg abs. diffs.")
+    ax[1].plot(min_abs_difs, "-o", label="Min abs. diffs.")
+    ax[1].set_title("Relative model differences")
+    ax[1].set_xlabel("Iterations")
+    ax[1].set_ylabel("Absolute feature value difference ")
+    ax[1].legend()
     plt.show()
 
     # visualize final graphs
+    print(f"Both models were ran for {len(gdata_pairs)} steps")
     print(f"The model being tested finished the run outputting this graph:")
     gdisplay(gdata_pairs[-1][0])
     print(gdata_pairs[-1][0].x)
@@ -143,15 +142,15 @@ def model_compare(model, base, gdata=None, iterations=20):
     print(gdata_pairs[-1][1].x)
     
     # conservation laws check
-    model_sums = [t.sum(g_pair[0].x).item() for g_pair in gdata_pairs]
-    base_sums = [t.sum(g_pair[1].x).item() for g_pair in gdata_pairs]
-    fig2, ax2 = plt.subplots(1,1)
-    ax2.plot(model_sums, "-+", label="model feature sum")
-    ax2.plot(base_sums, "-+", label="base feature sum")
-    plt.title("Conservation law?")
-    plt.xlabel("Iterations")
-    plt.ylabel("Sum of feature values")
-    plt.legend()
-    plt.show()
+    #model_sums = [t.sum(g_pair[0].x).item() for g_pair in gdata_pairs]
+    #base_sums = [t.sum(g_pair[1].x).item() for g_pair in gdata_pairs]
+    #fig2, ax2 = plt.subplots(1,1)
+    #ax2.plot(model_sums, "-+", label="model feature sum")
+    #ax2.plot(base_sums, "-+", label="base feature sum")
+    #plt.title("Conservation law?")
+    #plt.xlabel("Iterations")
+    #plt.ylabel("Sum of feature values")
+    #plt.legend()
+    #plt.show()
     
     return (gdata_pairs[-1][0], gdata_pairs[-1][1])

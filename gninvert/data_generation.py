@@ -184,6 +184,11 @@ g_edge_index3 = t.tensor(
      [1, 2, 3, 4, 5, 6, 5, 4, 3, 2, 1, 0]],
     dtype=t.long)
 
+def sample_graph_from_gn(gn, edge_index=g_edge_index1, seed=None):
+    if seed != None:
+        t.manual_seed(seed)
+    return generate_graphs_from_connections(edge_index, gn.node_features, num=1)[0]
+
 def generate_training_data(gn, edge_indices=None, graphs_per_edge_index=30, steps_per_graph=4):
     """Generate training data based on a GN"""
     if edge_indices == None:

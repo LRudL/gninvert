@@ -18,6 +18,11 @@ all_args.add_argument("-m", "--models", required=False,
                       help="which models to invert")
 all_args.add_argument("-p", "--hps", required=False,
                       help="which hp sets to use (same order as models)")
+all_args.add_argument("-s", "--skip", required=False,
+                      help="only do training, no SR")
+all_args.add_argument("-r", "--runs", required=False,
+                      help="how many runs per HP setting",
+                      default=4)
 
 args = vars(all_args.parse_args())
 
@@ -45,7 +50,7 @@ model_message_features = {
 
 hps = {
     'full': {
-        'loss_func': [t.nn.MSELoss(), t.nn.L1Loss()],
+        'loss_func': [t.nn.MSELoss(), t.nn.L1Loss(reduction="mean")],
         'optimizer': ['adam'],
         'regularization_coefficient': [False, 1e-5, 1e-3],
         'regularization_norm': [1, 2],
@@ -56,11 +61,11 @@ hps = {
         'batch_size': [2],
         'adam_weight_decay': [1e-7],
         'epochs': [200],
-        1: [None],
-        2: [None],
-        3: [[64], [256], [1024], [32, 32], [16, 16, 16]],
-        4: [t.nn.GELU],
-        5: [True, False]
+        1: [None], # node features - gets autofilled if None
+        2: [None], # message features - gets autofilled if None
+        3: [[64], [256], [1024], [32, 32], [16, 16, 16]], # hidden sizes
+        4: [t.nn.GELU], # nonlinearity
+        5: [True, False] # nonlinearity at end
     },
     'minimal': {
         'loss_func': [t.nn.MSELoss()],
@@ -79,8 +84,49 @@ hps = {
         3: [[64]],
         4: [t.nn.GELU],
         5: [True]
+    },
+    'paper': {
+        'loss_func': [t.nn.L1Loss(reduction="mean")],
+        'optimizer': ['adam'],
+        'regularization_coefficient': [1e-8],
+        'regularization_norm': [2],
+        'starting_lr': [0.1],                # improv
+        'lr_scheduler_dec_factor': [0.2],    # improv
+        'lr_scheduler_patience': [50],       # improv
+        'lr_scheduler_cooldown': [1],        # improv
+        'batch_size': [2],                   # improv
+        'adam_weight_decay': [1e-7],         # improv
+        'epochs': [300],                     # improv
+        1: [None],
+        2: [None],
+        3: [[300, 300]],
+        4: [t.nn.ReLU],
+        5: [False]                           # improv
+    },
+    'diff2_search':  {
+        'loss_func': [t.nn.MSELoss()],
+        'optimizer': ['adam'],
+        'regularization_coefficient': [False, 1e-5, 1e-3],
+        'regularization_norm': [1, 2],
+        'starting_lr': [0.1],
+        'lr_scheduler_dec_factor': [0.2],
+        'lr_scheduler_patience': [75],
+        'lr_scheduler_cooldown': [1],
+        'batch_size': [2],
+        'adam_weight_decay': [1e-7],
+        'epochs': [200],
+        1: [None], # node features - gets autofilled if None
+        2: [None], # message features - gets autofilled if None
+        3: [[16], [64], [8, 8], [32, 32], [8, 8, 8], [16, 16, 16]], # hidden sizes
+        4: [t.nn.GELU], # nonlinearity
+        5: [False] # nonlinearity at end
     }
 }
+
+skip_sr = args['skip'] != None 
+if skip_sr:
+    print("Warning: skipping symbolic regression step. No equations will be output.")
+    print("To perform symbolic regression, do not pass the -s/--skip option")
 
 for i in range(len(args['models'].split(" "))):
     mname = args['models'].split(" ")[i]
@@ -100,7 +146,8 @@ for i in range(len(args['models'].split(" "))):
                   run_name=f"{args['name']}_{mname}",
                   nn_constructor=GNN_full,
                   hyperparam_settings=hp_settings,
-                  models_per_hp_setting=4,
+                  models_per_hp_setting=int(args['runs']),
                   graphs_in_training_data=4,
                   training_graph_size=1024,
-                  model_criterion='simulation')
+                  model_criterion='simulation',
+                  skip_invert=skip_sr)

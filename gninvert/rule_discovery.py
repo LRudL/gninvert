@@ -33,7 +33,7 @@ def model_pred_acc_tester_fn(model_or_hp_res, gn):
                             iterations=6)['absolute']['avg_difs'][-1]
         for i in range(5)
     ]
-    return sum(diffs1) / len(diffs)
+    return sum(diffs) / len(diffs)
 
 model_pred_acc_fn_maker = lambda gn : (lambda res : model_pred_acc_tester_fn(res, gn))
 

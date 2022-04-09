@@ -156,6 +156,27 @@ hps = {
         4: [t.nn.GELU], # nonlinearity
         5: [False] # nonlinearity at end
     },
+    'act_inh_simple_search2': {
+        'loss_func': [t.nn.L1Loss(reduction="mean")],
+        'optimizer': ['adam'],
+        'regularization_coefficient': [False, 1e-3],
+        'regularization_norm': [1],
+        'starting_lr': [0.1],
+        'lr_scheduler_dec_factor': [0.2],
+        'lr_scheduler_patience': [100],
+        'lr_scheduler_cooldown': [1],
+        'batch_size': [2],
+        'adam_weight_decay': [1e-7],
+        'epochs': [1000],
+        1: [None], # node features - gets autofilled if None
+        2: [None], # message features - gets autofilled if None
+        3: [[32], [64], [128], [256], [512], [1024], [2048], [4096],
+            [32,32], [64, 64], [128, 128],
+            [16, 16, 16], [32, 32, 32], [64, 64, 64],
+            [16, 16, 16, 16]], # hidden sizes
+        4: [t.nn.GELU], # nonlinearity
+        5: [False] # nonlinearity at end
+    }
 }
 
 skip_sr = args['skip'] != None 

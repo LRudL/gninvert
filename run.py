@@ -203,15 +203,15 @@ hps = {
         'regularization_norm': [1],
         'starting_lr': [0.1],
         'lr_scheduler_dec_factor': [0.1],
-        'lr_scheduler_patience': [50, 200],
+        'lr_scheduler_patience': [200],
         'lr_scheduler_cooldown': [1],
         'batch_size': [2],
-        'adam_weight_decay': [1e-10, 1e-7, 1e-4],
+        'adam_weight_decay': [0],
         'epochs': [1000],
         1: [None], # node features - gets autofilled if None
         2: [None], # message features - gets autofilled if None
-        3: [[16, 16], [64, 64], [256, 256], [1024, 1024],
-            [16, 16, 16], [32, 32, 32], [64, 64, 64],
+        3: [[256, 256],
+            [16, 16, 16], [32, 32, 32],
             [16, 16, 16, 16]],
         4: [t.nn.GELU], # nonlinearity
         5: [False] # nonlinearity at end

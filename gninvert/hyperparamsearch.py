@@ -31,7 +31,8 @@ def train_on_param_settings(settings, model, model_eval, training_data):
         optim = t.optim.Adam(
             model.parameters(),
             lr=settings['starting_lr'],
-            weight_decay=settings['adam_weight_decay']
+            weight_decay=settings['adam_weight_decay'],
+            betas=settings.get('adam_betas', (0.9, 0.99))
         )
     elif settings['optimizer'] == 'sgd':
         optim = t.optim.SGD(

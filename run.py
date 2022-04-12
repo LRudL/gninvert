@@ -150,10 +150,10 @@ hps = {
         4: [t.nn.ReLU],
         5: [False]                           # improv
     },
-    'diff1_precise': {
+    'diff1_precise': { # runs/PRECISE1_diff1 (BEST for diff1)
         'loss_func': [t.nn.MSELoss()],
         'optimizer': ['adam'],
-        'regularization_coefficient': [False, 1e-5],
+        'regularization_coefficient': [1e-5],
         'regularization_norm': [1],
         'starting_lr': [0.1],
         'lr_scheduler_dec_factor': [0.1],
@@ -161,7 +161,7 @@ hps = {
         'lr_scheduler_cooldown': [1],
         'batch_size': [2],
         'adam_weight_decay': [0],
-        'epochs': [500],
+        'epochs': [1500],
         1: [None], # node features - gets autofilled if None
         2: [None], # message features - gets autofilled if None
         3: [[64], [16, 16, 16]], # hidden sizes
@@ -200,6 +200,23 @@ hps = {
         1: [None], # node features - gets autofilled if None
         2: [None], # message features - gets autofilled if None
         3: [[16], [64], [8, 8, 8], [16, 16, 16]], # hidden sizes
+        4: [t.nn.GELU], # nonlinearity
+        5: [False] # nonlinearity at end
+    },
+    'diff2_tuned': { # PRECISE1_diff2 (BEST for diff2)
+        'loss_func': [t.nn.MSELoss()],
+        'optimizer': ['adam'],
+        'regularization_coefficient': [False],
+        'starting_lr': [0.1],
+        'lr_scheduler_dec_factor': [0.2],
+        'lr_scheduler_patience': [75],
+        'lr_scheduler_cooldown': [1],
+        'batch_size': [2],
+        'adam_weight_decay': [1e-7],
+        'epochs': [2000],
+        1: [None], # node features - gets autofilled if None
+        2: [None], # message features - gets autofilled if None
+        3: [[16], [16, 16, 16]], # hidden sizes
         4: [t.nn.GELU], # nonlinearity
         5: [False] # nonlinearity at end
     },
@@ -242,25 +259,25 @@ hps = {
         4: [t.nn.GELU], # nonlinearity
         5: [False] # nonlinearity at end
     },
-    'act_inh_simple_search3': {
+    'act_inh_simple_shallow_search': {
         'loss_func': [t.nn.L1Loss(reduction="mean")],
         'optimizer': ['adam'],
-        'regularization_coefficient': [False, 1e-5, 1e-3, 1e-1],
+        'regularization_coefficient': [False],
         'regularization_norm': [1],
         'starting_lr': [0.1],
-        'lr_scheduler_dec_factor': [0.2],
-        'lr_scheduler_patience': [100],
+        'lr_scheduler_dec_factor': [0.1],
+        'lr_scheduler_patience': [200],
         'lr_scheduler_cooldown': [1],
         'batch_size': [2],
-        'adam_weight_decay': [1e-10, 1e-7, 1e-4],
-        'epochs': [1000],
+        'adam_weight_decay': [0],
+        'epochs': [2000],
         1: [None], # node features - gets autofilled if None
         2: [None], # message features - gets autofilled if None
         3: [[32], [64], [128], [256], [512], [1024], [2048], [4096]],
         4: [t.nn.GELU], # nonlinearity
         5: [False] # nonlinearity at end
     },
-    'act_inh_simple_bignet_search':  {
+    'act_inh_simple_bignet_search':  { # runs/searches_bignet_act_inh_simple
         'loss_func': [t.nn.L1Loss(reduction="mean")],
         'optimizer': ['adam'],
         'regularization_coefficient': [False, 1e-3],

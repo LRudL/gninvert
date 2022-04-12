@@ -29,6 +29,8 @@ args = vars(all_args.parse_args())
 models = {
     'diff1' : SingleDiffusionGN(diffusion_constant=0.1),
     'diff2' : MultiDiffusionGN(diffusion_constants=[0.1, 0.1]),
+    'diff3' : MultiDiffusionGN(diffusion_constants=[0.1, 0.1, 0.1]),
+    'vardiff3': MultiDiffusionGN(diffusion_constants=[0.15, 0.1, 0.05]), 
     'act_inh_simple': ActivatorInhibitorGN(act_diff_const=0.1,
                                            inh_diff_const=0.05,
                                            growth_const=0.05),
@@ -67,6 +69,24 @@ hps = {
         4: [t.nn.GELU], # nonlinearity
         5: [True, False] # nonlinearity at end
     },
+    'general': {
+        'loss_func': [t.nn.MSELoss(), t.nn.L1Loss(reduction="mean")],
+        'optimizer': ['adam'],
+        'regularization_coefficient': [False, 1e-5, 1e-3],
+        'regularization_norm': [1, 2],
+        'starting_lr': [0.1],
+        'lr_scheduler_dec_factor': [0.1],
+        'lr_scheduler_patience': [100],
+        'lr_scheduler_cooldown': [1],
+        'batch_size': [2],
+        'adam_weight_decay': [1e-7],
+        'epochs': [500],
+        1: [None], # node features - gets autofilled if None
+        2: [None], # message features - gets autofilled if None
+        3: [[64], [256], [1024], [16, 16], [64, 64], [256, 256], [16, 16, 16]], # hidden sizes
+        4: [t.nn.GELU], # nonlinearity
+        5: [False] # nonlinearity at end
+    },
     'minimal': {
         'loss_func': [t.nn.MSELoss()],
         'optimizer': ['adam'],
@@ -91,13 +111,13 @@ hps = {
         'regularization_coefficient': [1e-8],
         'regularization_norm': [2],
         'starting_lr': [0.1],                # improv
-        'lr_scheduler_dec_factor': [0.2],    # improv
-        'lr_scheduler_patience': [50, 250],  # improv
+        'lr_scheduler_dec_factor': [0.1],    # improv
+        'lr_scheduler_patience': [100],      # improv
         'lr_scheduler_cooldown': [1],        # improv
-        'batch_size': [1, 4],                # improv
-        'adam_weight_decay': [0, 1e-8, 1e-4],# improv
-        'adam_betas': [(0.7, 0.97), (0.8, 0.98), (0.9, 0.999)], 
-        'epochs': [1000],                    # improv
+        'batch_size': [4],                   # improv
+        'adam_weight_decay': [0],            # improv
+        'adam_betas': [(0.7, 0.97), (0.8, 0.98), (0.85, 0.985), (0.9, 0.999), (0.97, 0.9997)], #improv
+        'epochs': [500],                     # improv
         1: [None],
         2: [None],
         3: [[300, 300]],

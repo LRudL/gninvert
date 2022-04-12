@@ -154,3 +154,23 @@ def model_compare(model, base, gdata=None, iterations=20):
     #plt.show()
     
     return (gdata_pairs[-1][0], gdata_pairs[-1][1])
+
+
+model_last_loss_fn = lambda res : res['val_loss_history'][-1]
+
+def model_pred_acc_tester_fn(model_or_hp_res, gn):
+    # gn: ground truth Graph Network
+    if type(model_or_hp_res) == dict:
+        model = model_or_hp_res['model']
+    else:
+        model = model_or_hp_res
+    diffs = [
+        model_steps_compare(model,
+                            gn,
+                            gdata=sample_graph_from_gn(gn, seed=42+i),
+                            iterations=6)['absolute']['avg_difs'][-1]
+        for i in range(5)
+    ]
+    return sum(diffs) / len(diffs)
+
+model_pred_acc_fn_maker = lambda gn : (lambda res : model_pred_acc_tester_fn(res, gn))

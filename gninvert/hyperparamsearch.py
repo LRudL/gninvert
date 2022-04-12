@@ -1,7 +1,7 @@
 import torch as t
 from gninvert.gns import MultiDiffusionGN
 from gninvert.gnns import LinearGNN
-from gninvert.graph_compare import model_steps_compare
+from gninvert.graph_compare import model_steps_compare, model_pred_acc_fn_maker, model_last_loss_fn
 from gninvert.functions import generate_training_data, copy_from
 from gninvert.training import fit
 import gninvert.dtree as dtree
@@ -145,6 +145,35 @@ def view_hp_results_graph(results, ordered=True):
     plt.title('Validation loss histories in the hyperparameter search')
     plt.ylabel('Validation loss')
     plt.xlabel('Epoch')
+
+def hp_argmin(fn):
+    def argminer(hpres):
+        if len(hpres) == 0:
+            raise Exception("Empty hyperparameter results object!")
+        minimum = float('inf')
+        argmin = None
+        for res in hpres:
+            val = fn(res)
+            if val < minimum:
+                argmin = res
+                minimum = val
+        return (argmin, minimum)
+    return argminer
+    
+
+def hp_stats(hpres, gn):
+    val_minimising_res, val_min = hp_argmin(model_last_loss_fn)(hpres)
+    err_minimising_res, err_min = hp_argmin(model_pred_acc_fn_maker(gn))(hpres)
+    return {
+        'final_val_loss': {
+            'minimised_by': val_minimising_res['settings'],
+            'minimum': val_min
+        },
+        'prediction_error': {
+            'minimised_by': err_minimising_res['settings'],
+            'minimum': err_min
+        }
+    }
 
 def get_hyperparam_dtree(
         hp_results,

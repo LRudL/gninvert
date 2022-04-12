@@ -6,7 +6,7 @@ from functools import reduce
 import dill
 
 from gninvert.functions import sort_with
-from gninvert.graph_compare import model_steps_compare, model_compare
+from gninvert.graph_compare import model_steps_compare, model_compare, model_last_loss_fn, model_pred_acc_fn_maker
 from gninvert.data_generation import get_TrainingData, sample_graph_from_gn
 from gninvert.gnns import GNN_full
 from gninvert.gns import RecoveredGN
@@ -17,25 +17,6 @@ HPSEARCH_SAVE_LOC = "/hpsearch"
 MODEL_SAVE_LOC = "/model"
 SR_SAVE_LOC = "/sr"
 GN_SAVE_LOC = "/gn"
-
-model_last_loss_fn = lambda res : res['val_loss'][-1]
-
-def model_pred_acc_tester_fn(model_or_hp_res, gn):
-    # gn: ground truth Graph Network
-    if type(model_or_hp_res) == dict:
-        model = model_or_hp_res['model']
-    else:
-        model = model_or_hp_res
-    diffs = [
-        model_steps_compare(model,
-                            gn,
-                            gdata=sample_graph_from_gn(gn, seed=42+i),
-                            iterations=6)['absolute']['avg_difs'][-1]
-        for i in range(5)
-    ]
-    return sum(diffs) / len(diffs)
-
-model_pred_acc_fn_maker = lambda gn : (lambda res : model_pred_acc_tester_fn(res, gn))
 
 
 def make_dir_for_run(file_location, run_name):
@@ -130,7 +111,7 @@ def find_model(
 
     if model_save_location:
         t.save(hp_results[0]['model'], model_save_location)
-        print(f"Saved model with lowest validation loss to {model_save_location}")
+        print(f"Saved best model (using selected criterion) to {model_save_location}")
     
     if return_all:
         return hp_results
@@ -205,7 +186,8 @@ def discover_rules(
         hyperparam_overrides = {},
         models_per_hp_setting = 1,
         model_compare_fn = lambda hp_result_obj : hp_result_obj['val_loss_history'][-1],
-        skip_invert = False
+        skip_invert = False,
+        skip_using_model = False
 ):
     if run_name == None:
         run_name = datetime.now().strftime("gninversion_%Y-%m-%d_%H:%M:%S")
@@ -222,17 +204,21 @@ def discover_rules(
     (xs_are_graphs, ys_are_graphs) = data.are_types_graphs()
     
     print("TRAINING")
-    
-    model_res = find_model(
-        data,
-        hpsearch_save_location,
-        model_save_location,
-        nn_constructor = nn_constructor,
-        hyperparam_settings = hyperparam_settings,
-        hyperparam_overrides = hyperparam_overrides,
-        best_of = models_per_hp_setting,
-        model_compare_fn = model_compare_fn
-    )
+
+    if skip_using_model:
+        model = skip_using_model
+    else:
+        model_res = find_model(
+            data,
+            hpsearch_save_location,
+            model_save_location,
+            nn_constructor = nn_constructor,
+            hyperparam_settings = hyperparam_settings,
+            hyperparam_overrides = hyperparam_overrides,
+            best_of = models_per_hp_setting,
+            model_compare_fn = model_compare_fn
+        )
+        model = model_res['model']
 
     if skip_invert:
         print("skip_invert set to True; EXITING EARLY.")
@@ -242,7 +228,7 @@ def discover_rules(
 
     arg_dims = None if xs_are_graphs and ys_are_graphs else [data.train_ds()[0][0].shape[0]]
     rules = find_rules_for_model(
-        model_res['model'],
+        model,
         arg_dims = arg_dims,
         save_location = sr_save_location,
         data_trained_on = data
@@ -264,7 +250,8 @@ def invert_gn(
         graphs_in_training_data=20,
         training_graph_size=1000,
         model_criterion = 'simulation',
-        skip_invert = False
+        skip_invert = False,
+        skip_training = False
 ):
     if save_to_file == True:
         make_dir_for_run(file_location, run_name)
@@ -290,7 +277,8 @@ def invert_gn(
         hyperparam_overrides=hyperparam_overrides,
         models_per_hp_setting=models_per_hp_setting,
         model_compare_fn=model_compare_fn,
-        skip_invert=skip_invert
+        skip_invert=skip_invert,
+        skip_using_model=gn if skip_training else False
     )
 
 def view_run_results(fpath):

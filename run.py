@@ -20,6 +20,13 @@ all_args.add_argument("-p", "--hps", required=False,
                       help="which hp sets to use (same order as models)")
 all_args.add_argument("-s", "--skip", required=False,
                       help="only do training, no SR")
+all_args.add_argument("-S", "--skiptrain", required=False,
+                      help="only do SR, no training")
+all_args.add_argument("-M", "--modelpath", required=False,
+                      help="replace model with model from this path")
+all_args.add_argument("-c", "--criterion", required=False,
+                      help="criterion for selecting best model, either 'simulation' or 'loss'",
+                      default='simulation')
 all_args.add_argument("-r", "--runs", required=False,
                       help="how many runs per HP setting",
                       default=4)
@@ -46,6 +53,7 @@ models = {
 model_message_features = {
     'diff1': 1,
     'diff2': 2,
+    'diff3': 3,
     'act_inh_simple': 2,
     'act_inh_full': 2
 }
@@ -79,7 +87,7 @@ hps = {
         'lr_scheduler_patience': [100],
         'lr_scheduler_cooldown': [1],
         'batch_size': [2],
-        'adam_weight_decay': [1e-7],
+        'adam_weight_decay': [0],
         'epochs': [500],
         1: [None], # node features - gets autofilled if None
         2: [None], # message features - gets autofilled if None
@@ -123,6 +131,24 @@ hps = {
         3: [[300, 300]],
         4: [t.nn.ReLU],
         5: [False]                           # improv
+    },
+    'diff1_precise': {
+        'loss_func': [t.nn.MSELoss()],
+        'optimizer': ['adam'],
+        'regularization_coefficient': [False, 1e-5],
+        'regularization_norm': [1],
+        'starting_lr': [0.1],
+        'lr_scheduler_dec_factor': [0.1],
+        'lr_scheduler_patience': [100],
+        'lr_scheduler_cooldown': [1],
+        'batch_size': [2],
+        'adam_weight_decay': [0],
+        'epochs': [500],
+        1: [None], # node features - gets autofilled if None
+        2: [None], # message features - gets autofilled if None
+        3: [[64], [16, 16, 16]], # hidden sizes
+        4: [t.nn.GELU], # nonlinearity
+        5: [False] # nonlinearity at end
     },
     'diff2_search':  { # see runs/diff2_try2_diff2 for results
         'loss_func': [t.nn.MSELoss()],
@@ -243,6 +269,16 @@ if skip_sr:
     print("Warning: skipping symbolic regression step. No equations will be output.")
     print("To perform symbolic regression, do not pass the -s/--skip option")
 
+skip_training = args['skiptrain'] != None
+if skip_training:
+    print("Warning: skipping training step and jumping straight to symbolic regression.")
+    print("To perform training, do not pass the -S/--skiptrain option")
+
+if args['modelpath'] != None:
+    print(f"Loading custom model to train from {args['modelpath']} ...")
+    t.load(args['modelpath'])
+    print("Model loads!")
+
 for i in range(len(args['models'].split(" "))):
     mname = args['models'].split(" ")[i]
     if mname not in models.keys():
@@ -255,7 +291,8 @@ for i in range(len(args['models'].split(" "))):
             if i < len(hpss):
                 hp_settings = hps[hpss[i]]
         hp_settings[2] = [model_message_features[mname]]
-        invert_gn(models[mname],
+        model = models['mname'] if args['modelpath'] == None else t.load(args['modelpath'])            
+        invert_gn(model,
                   save_to_file=True,
                   file_location="runs",
                   run_name=f"{args['name']}_{mname}",
@@ -264,5 +301,6 @@ for i in range(len(args['models'].split(" "))):
                   models_per_hp_setting=int(args['runs']),
                   graphs_in_training_data=4,
                   training_graph_size=1024,
-                  model_criterion='simulation',
-                  skip_invert=skip_sr)
+                  model_criterion=args['criterion'],
+                  skip_invert=skip_sr,
+                  skip_training=skip_training)

@@ -259,7 +259,25 @@ hps = {
         4: [t.nn.GELU], # nonlinearity
         5: [False] # nonlinearity at end
     },
-    'act_inh_simple_shallow_search': {
+    'act_inh_simple_search3': { 
+        'loss_func': [t.nn.L1Loss(reduction="mean")],
+        'optimizer': ['adam'],
+        'regularization_coefficient': [False],
+        'regularization_norm': [1],
+        'starting_lr': [0.1],
+        'lr_scheduler_dec_factor': [0.1],
+        'lr_scheduler_patience': [200],
+        'lr_scheduler_cooldown': [1],
+        'batch_size': [2],
+        'adam_weight_decay': [0],
+        'epochs': [2000],
+        1: [None], # node features - gets autofilled if None
+        2: [None], # message features - gets autofilled if None
+        3: [[32, 32, 32]], # hidden sizes
+        4: [t.nn.GELU], # nonlinearity
+        5: [False] # nonlinearity at end
+    },
+    'act_inh_simple_shallow_search': { # runs/SHALLOW_act_inh_simple (interesting results!)
         'loss_func': [t.nn.L1Loss(reduction="mean")],
         'optimizer': ['adam'],
         'regularization_coefficient': [False],

@@ -1,5 +1,5 @@
 import argparse
-import os
+import os 
 
 import torch as t
 
@@ -91,7 +91,7 @@ hps = {
         'epochs': [500],
         1: [None], # node features - gets autofilled if None
         2: [None], # message features - gets autofilled if None
-        3: [[64], [256], [1024], [16, 16], [64, 64], [256, 256], [16, 16, 16]], # hidden sizes
+        3: [[16], [64], [256], [16, 16], [64, 64], [256, 256], [16, 16, 16]], # hidden sizes
         4: [t.nn.GELU], # nonlinearity
         5: [False] # nonlinearity at end
     },
@@ -112,6 +112,24 @@ hps = {
         3: [[64]],
         4: [t.nn.GELU],
         5: [True]
+    },
+    'linear': {
+        'loss_func': [t.nn.MSELoss()],
+        'optimizer': ['adam'],
+        'regularization_coefficient': [False, 1e-6, 1e-3],
+        'regularization_norm': [1, 2],
+        'starting_lr': [0.1],
+        'lr_scheduler_dec_factor': [0.1],
+        'lr_scheduler_patience': [50],
+        'lr_scheduler_cooldown': [1],
+        'batch_size': [2],
+        'adam_weight_decay': [0],
+        'epochs': [500],
+        1: [None],
+        2: [None],
+        3: [[]],
+        4: [t.nn.GELU],
+        5: [False]
     },
     'paper': {
         'loss_func': [t.nn.L1Loss(reduction="mean")],
@@ -291,7 +309,7 @@ for i in range(len(args['models'].split(" "))):
             if i < len(hpss):
                 hp_settings = hps[hpss[i]]
         hp_settings[2] = [model_message_features[mname]]
-        model = models['mname'] if args['modelpath'] == None else t.load(args['modelpath'])            
+        model = models[mname] if args['modelpath'] == None else t.load(args['modelpath'])            
         invert_gn(model,
                   save_to_file=True,
                   file_location="runs",

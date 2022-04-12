@@ -233,6 +233,7 @@ def get_TrainingData(
         graph_size = 1000,
         big = False
 ):
+    shuffle=False
     """Returns a TrainingData object generated based on the GN provided"""
     # aargh horrible backwards-compatibility messes for older Jupyter notebooks: 
     if graphs == None:

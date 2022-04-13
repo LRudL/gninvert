@@ -126,7 +126,7 @@ def model_compare(model, base, gdata=None, iterations=20):
     ax[1].plot(max_abs_difs, "-o", label="Max abs. diffs.")
     ax[1].plot(avg_abs_difs, "-o", label="Avg abs. diffs.")
     ax[1].plot(min_abs_difs, "-o", label="Min abs. diffs.")
-    ax[1].set_title("Relative model differences")
+    ax[1].set_title("Absolute model differences")
     ax[1].set_xlabel("Iterations")
     ax[1].set_ylabel("Absolute feature value difference ")
     ax[1].legend()

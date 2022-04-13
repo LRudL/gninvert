@@ -33,7 +33,7 @@ all_args.add_argument("-r", "--runs", required=False,
 
 args = vars(all_args.parse_args())
 
-models = {
+models = { # remember to add to model_message_features too!
     'diff1' : SingleDiffusionGN(diffusion_constant=0.1),
     'diff2' : MultiDiffusionGN(diffusion_constants=[0.1, 0.1]),
     'diff3' : MultiDiffusionGN(diffusion_constants=[0.1, 0.1, 0.1]),
@@ -54,6 +54,7 @@ model_message_features = {
     'diff1': 1,
     'diff2': 2,
     'diff3': 3,
+    'vardiff3': 3,
     'act_inh_simple': 2,
     'act_inh_full': 2
 }

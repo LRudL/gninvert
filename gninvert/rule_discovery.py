@@ -167,10 +167,12 @@ def find_rules_for_model(
         # Therefore, RecoveredGN implements a .save and a (static!) .load method
         # for saving and loading in a way that works around these issues
         # (each taking string path as an arg)
-        to_return.save(save_location)
+        if save_location != False:
+            to_return.save(save_location)
     else:
         to_return = find_rule_for_fn(model, arg_dims, return_all = False)
-        t.save(to_return, save_location)
+        if save_location != False:
+            t.save(to_return, save_location)
 
     return to_return
 
@@ -290,7 +292,7 @@ def view_run_results(fpath):
         sr = "couldn't load SR"
     gn = t.load(fpath + GN_SAVE_LOC)
     view_hp_results_graph(hpresults, ordered=True)
-    model_compare(gn, model)
+    model_compare(model, gn)
     #print(model)
     print(sr)
     if type(sr) == str:

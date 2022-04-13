@@ -150,7 +150,7 @@ def find_rules_for_model(
     if hasattr(model, 'message') and hasattr(model, 'update') and hasattr(model, 'propagate'):
         # then this should really be a GN
         message_arg_dims = [model.node_features, model.node_features]
-        update_arg_dims  = [model.node_features, model.message_features]
+        update_arg_dims  = [model.message_features, model.node_features]
         message_rule = find_rule_for_fn(
             model.message,
             message_arg_dims,

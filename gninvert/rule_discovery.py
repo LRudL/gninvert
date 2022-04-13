@@ -159,7 +159,7 @@ def find_rules_for_model(
         update_rule = find_rule_for_fn(
             model.update,
             update_arg_dims,
-            arg_names = ["xt", "a"] # abbreviations for x_target and aggregation
+            arg_names = ["a", "xt"] # abbreviations for x_target and aggregation
         )
         to_return = RecoveredGN(message_rule, update_rule, data_trained_on)
         # cannot save directly in any normal sensible way because pickling doesn't work on

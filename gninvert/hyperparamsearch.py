@@ -7,7 +7,7 @@ from gninvert.training import fit
 import gninvert.dtree as dtree
 import gninvert.data_generation
 import itertools
-from tqdm import tqdm
+from tqdm.autonotebook import tqdm
 import matplotlib.pyplot as plt
 import numpy as np
 from functools import reduce

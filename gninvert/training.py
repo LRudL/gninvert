@@ -1,5 +1,5 @@
 import torch as t
-from tqdm import tqdm
+from tqdm.autonotebook import tqdm
 
 def graphs_loss_func(model, xb, yb, node_loss_func = t.nn.MSELoss()):
     result = [model(gdata) for gdata in xb]

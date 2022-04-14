@@ -40,7 +40,12 @@ models = { # remember to add to model_message_features too!
     'vardiff3': MultiDiffusionGN(diffusion_constants=[0.15, 0.1, 0.05]), 
     'act_inh_simple': ActivatorInhibitorGN(act_diff_const=0.1,
                                            inh_diff_const=0.05,
-                                           growth_const=0.05),
+                                           growth_const=0.05,
+                                           eps=0.0),
+    'act_inh_simple_with_eps': ActivatorInhibitorGN(act_diff_const=0.1,
+                                             inh_diff_const=0.05,
+                                             growth_const=0.05,
+                                             eps=0.1),
     'act_inh_full': FullActInhGN(spatial_const=10,
                                  temporal_const=0.01,
                                  growth_alpha=10,
@@ -56,6 +61,7 @@ model_message_features = {
     'diff3': 3,
     'vardiff3': 3,
     'act_inh_simple': 2,
+    'act_inh_simple_with_eps': 2,
     'act_inh_full': 2
 }
 

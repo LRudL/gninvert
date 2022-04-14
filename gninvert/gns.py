@@ -45,8 +45,35 @@ class MultiDiffusionGN(ptgeo.nn.MessagePassing):
     def forward(self, gdata):
         return self.propagate(gdata.edge_index, x=gdata.x)
 
+class ActivatorGN(ptgeo.nn.MessagePassing):
+    def __init__(self):
+        super().__init__(aggr='add')
+        self.node_features = 2
+        self.message_features = 1
+
+    def message(self, x_i, x_j):
+        return 0.2 * (x_j[:, 1:] - x_i[:, 1:])
+
+    def update(self, aggr_out, x):
+        # give things names for convenience:
+        vol = x[:, 0] # cell sizes
+        act_conc = x[:, 1] # activator concentration
+        
+        growth = act_conc / vol
+        
+        act_delta_vec = aggr_out
+        
+        delta_vec = t.cat([growth.unsqueeze(1), act_delta_vec], dim=1)
+        
+        result = x + delta_vec
+        
+        return result
+
+    def forward(self, gdata):
+        return self.propagate(gdata.edge_index, x=gdata.x)
+
 class ActivatorInhibitorGN(ptgeo.nn.MessagePassing):
-    def __init__(self, act_diff_const, inh_diff_const, growth_const):
+    def __init__(self, act_diff_const, inh_diff_const, growth_const, eps=0.1):
         super().__init__(aggr='add')
         self.diff_consts = t.tensor([act_diff_const, inh_diff_const])
         self.act_diff_const = act_diff_const
@@ -54,6 +81,7 @@ class ActivatorInhibitorGN(ptgeo.nn.MessagePassing):
         self.growth_const = growth_const
         self.node_features = 3
         self.message_features = 2
+        self.eps = eps
 
     def message(self, x_i, x_j):
         return self.diff_consts * (x_j[:, 1:] - x_i[:, 1:])
@@ -64,7 +92,7 @@ class ActivatorInhibitorGN(ptgeo.nn.MessagePassing):
         act_conc = x[:, 1] # activator concentration
         inh_conc = x[:, 2] # inhibitor concentration
         
-        growth = ((act_conc - inh_conc) / vol * self.growth_const)
+        growth = ((act_conc - inh_conc) / (vol + self.eps)  * self.growth_const)
         
         act_inh_delta_vec = aggr_out # 
         

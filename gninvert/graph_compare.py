@@ -133,6 +133,9 @@ def model_compare(model, base, gdata=None, iterations=20):
     plt.show()
 
     # visualize final graphs
+    print("Graph at start:")
+    gdisplay(gdata_pairs[0][0])
+    print(gdata_pairs[0][0].x)
     print(f"Both models were ran for {len(gdata_pairs)} steps")
     print(f"The model being tested finished the run outputting this graph:")
     gdisplay(gdata_pairs[-1][0])

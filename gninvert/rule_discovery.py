@@ -257,7 +257,11 @@ def invert_gn(
 ):
     if save_to_file == True:
         make_dir_for_run(file_location, run_name)
-        t.save(gn, file_location + "/" + run_name + GN_SAVE_LOC)
+        if skip_invert == False:
+            # if skipping invert, gn is the model, don't want to overwrite gn
+            t.save(gn, file_location + "/" + run_name + GN_SAVE_LOC)
+        else:
+            print("Not overwriting GN")
     data = get_TrainingData(gn,
                             graphs=graphs_in_training_data,
                             graph_size=training_graph_size,
@@ -283,6 +287,17 @@ def invert_gn(
         skip_using_model=gn if skip_training else False
     )
 
+def rerun_sr(run_name, fpath="runs"):
+    return invert_gn(
+        t.load(fpath + "/" + run_name + MODEL_SAVE_LOC),
+        save_to_file=True,
+        file_location=fpath,
+        run_name=run_name,
+        model_criterion = 'simulation',
+        skip_invert = False,
+        skip_training = True
+    )
+
 def view_run_results(fpath):
     hpresults = t.load(fpath + HPSEARCH_SAVE_LOC)
     model = t.load(fpath + MODEL_SAVE_LOC)
@@ -299,3 +314,16 @@ def view_run_results(fpath):
         return gn, hpresults, model
     return gn, hpresults, model, sr
     
+def view_sr_results(fpath):
+    sr = t.load(fpath + SR_SAVE_LOC)
+    gn = t.load(fpath + GN_SAVE_LOC)
+    sr_gn = RecoveredGN.load(fpath + SR_SAVE_LOC)
+    for a in ['message_sr_result', 'update_sr_result']:
+        if type(sr[a]) != list:
+            eqobjs = [sr[a]]
+        else:
+            eqobjs = sr[a]
+        for eqobj in eqobjs:
+            print(f"{a} | {eqobj['equation']} | loss {eqobj['loss']}")
+    return sr_gn, gn
+    model_compare(sr_gn, gn)

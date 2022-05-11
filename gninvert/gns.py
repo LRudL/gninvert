@@ -91,10 +91,11 @@ class ActivatorInhibitorGN(ptgeo.nn.MessagePassing):
         vol = x[:, 0] # cell sizes
         act_conc = x[:, 1] # activator concentration
         inh_conc = x[:, 2] # inhibitor concentration
+
+        eps = 0 if not hasattr(self, 'eps') else self.eps
+        growth = ((act_conc - inh_conc) / (vol + eps)  * self.growth_const)
         
-        growth = ((act_conc - inh_conc) / (vol + self.eps)  * self.growth_const)
-        
-        act_inh_delta_vec = aggr_out # 
+        act_inh_delta_vec = aggr_out
         
         delta_vec = t.cat([growth.unsqueeze(1), act_inh_delta_vec], dim=1)
         
@@ -207,6 +208,8 @@ class RecoveredGN(EquationGN):
         self.message_sr_result = message_sr_result
         self.update_sr_result = update_sr_result
         self.data_trained_on = data_trained_on
+        self.message_features = len(message_sr_result) if type(message_sr_result) == list else 1
+        self.node_features = len(update_sr_result) if type(update_sr_result) == list else 1
 
         super().__init__(take_prop_unless_list(self.message_sr_result, 'lambda_format'),
                          take_prop_unless_list(self.update_sr_result, 'lambda_format'))

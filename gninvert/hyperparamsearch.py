@@ -135,7 +135,7 @@ def view_hp_results_graph(results, ordered=True):
     if ordered:
         n = min(len(results), 3)
         for i in range(n, len(results)):
-            plt.plot(val_series[i])
+            plt.plot(val_series[i], alpha=0.33)
         for i in range(n):
             plt.plot(val_series[i], linewidth=3, c=['black', 'purple', 'blue'][i])
     else:

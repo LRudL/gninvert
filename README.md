@@ -33,3 +33,20 @@ The packages installed are:
 - networkx
 - einops
 - PySR
+
+
+## Example usage
+
+The following command, run in the project directory, will do a hyperparameter search using the "general" hyperparameter settings over data from the 'diff2' model (diffusion network with two chemicals), running each hyperparameter setting 5 times, and saving the results:
+
+```
+python run.py -m diff2 -p general -r 5 -n name_to_save_under
+```
+
+The file `run.py` lists available models and hyperparameter options, in a format that is easy to extend yourself.
+
+Other options available:
+
+- pass `-s 1` to skip the symbolic regression and only do the hyperparameter search
+- pass `-S 1` to only do symbolic regression (on the model specified using `-m` directly, rather than on data generated from that model), skipping the hyperparameter search and the GNN training
+- pass `-c simulation` or `-c loss` to change whether the best GNN model is selected based on how accurately it simulates the original GN model, or on last-step validation loss in the training loop.
